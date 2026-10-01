@@ -1,8 +1,8 @@
 import enum
 import uuid
-from datetime import datetime
+from datetime import datetime, time
 
-from sqlalchemy import String, DateTime, ForeignKey, Integer, Enum, Index, Boolean
+from sqlalchemy import String, DateTime, ForeignKey, Integer, Enum, Index, Boolean, Time
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -50,6 +50,13 @@ class Task(Base):
     # never from "now", so repeated completions don't drift the schedule.
     anchor_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     interval_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Daily reminder window (user's local time). When window_start/window_end are set,
+    # reminders fire every interval_minutes inside the window, except during lunch.
+    window_start: Mapped[time | None] = mapped_column(Time, nullable=True)
+    window_end: Mapped[time | None] = mapped_column(Time, nullable=True)
+    lunch_start: Mapped[time | None] = mapped_column(Time, nullable=True)
+    lunch_end: Mapped[time | None] = mapped_column(Time, nullable=True)
 
     next_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     snoozed_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -20,7 +20,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.models import Task, TaskStatus, User, Device, NotificationLog
-from app.services import push_service
+from app.services import push_service, task_service
 from app.services.push_service import GoneException
 from app.workers.celery_app import celery_app
 from zoneinfo import ZoneInfo
@@ -52,6 +52,20 @@ def _in_quiet_hours(user: User, now_utc: datetime) -> tuple[bool, datetime | Non
     if end_local <= local_now:
         end_local += timedelta(days=1)
     return True, end_local.astimezone(timezone.utc)
+
+
+def _roll_window_forward(task: Task, user: User, now: datetime) -> None:
+    """For time-window tasks: schedule the next slot (skips lunch, rolls to next day)."""
+    if task.window_start is None or task.window_end is None or not task.interval_minutes:
+        return
+    if task.snoozed_until is not None:
+        return
+    if task.next_due_at is not None and task.next_due_at > now:
+        return
+    task.next_due_at = task_service.next_window_slot(
+        now, user.timezone, task.window_start, task.window_end,
+        task.interval_minutes, task.lunch_start, task.lunch_end,
+    )
 
 
 def _check_due_reminders_sync():
@@ -110,6 +124,7 @@ def _check_due_reminders_sync():
             )
             if not devices:
                 logger.debug("[Beat] Task %s has no push-enabled devices — skipping", task.id)
+                _roll_window_forward(task, user, now)
                 continue
 
             due_at_iso = (task.next_due_at or task.snoozed_until or task.due_at or now).isoformat()
@@ -146,6 +161,8 @@ def _check_due_reminders_sync():
                 # Recurring tasks manage their own schedule via _advance_recurrence.
                 if task.recurrence.value == "none":
                     task.due_at = None
+
+            _roll_window_forward(task, user, now)
 
         db.commit()
         logger.info("[Beat] check_due_reminders — done")

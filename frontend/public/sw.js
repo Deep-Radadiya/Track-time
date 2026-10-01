@@ -249,7 +249,9 @@ self.addEventListener('notificationclick', (event) => {
     const reminderId = event.notification.data?.reminder_id
     const targetUrl = isCheckin
       ? `/dashboard?checkin=1${reminderId ? `&reminderId=${reminderId}` : ''}`
-      : '/dashboard'
+      : task_id
+        ? `/update/${task_id}`
+        : '/dashboard'
 
     event.waitUntil(
       clients.matchAll({ type: 'window' }).then((clientList) => {

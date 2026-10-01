@@ -70,6 +70,10 @@ export interface Task {
   snoozed_count_today: number
   snoozed_count_total: number
   category: string | null
+  window_start?: string | null
+  window_end?: string | null
+  lunch_start?: string | null
+  lunch_end?: string | null
   source: TaskSource
   created_at: string
   updated_at: string
@@ -84,6 +88,10 @@ export interface TaskCreateRequest {
   category?: string | null
   source?: TaskSource
   notes?: TaskNoteIn[]
+  window_start?: string | null
+  window_end?: string | null
+  lunch_start?: string | null
+  lunch_end?: string | null
 }
 
 export interface TaskUpdateRequest {
