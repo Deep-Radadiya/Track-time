@@ -2,8 +2,8 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useVoiceInput } from '@/hooks/useVoiceInput'
 import { companionApi } from '@/api/companion'
 import { Mic, MicOff, Send, Loader2 } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { parseApiError } from '@/lib/utils'
+// import toast from 'react-hot-toast'
+// import { parseApiError } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 
 export function CompanionCommandBar() {
@@ -20,7 +20,7 @@ export function CompanionCommandBar() {
 
   const [text, setText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [latestReply, setLatestReply] = useState<string | null>(null)
+  const [, setLatestReply] = useState<string | null>(null)
   
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -59,7 +59,9 @@ export function CompanionCommandBar() {
       queryClient.invalidateQueries({ queryKey: ['currentTask'] })
       
     } catch (err) {
-      toast.error(parseApiError(err))
+      // Hidden: error toast
+      // toast.error(parseApiError(err))
+      void err
     } finally {
       setIsSubmitting(false)
       inputRef.current?.focus()
@@ -79,13 +81,15 @@ export function CompanionCommandBar() {
 
   return (
     <div className="w-full space-y-3">
+      {/* Hidden: Aria reply banner
       {latestReply && (
         <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg text-sm text-accent animate-in fade-in slide-in-from-bottom-2">
           <span className="font-semibold">Aria: </span>
           {latestReply}
         </div>
       )}
-      
+      */}
+
       <form onSubmit={handleSubmit} className="relative flex items-center gap-2">
         <div className="relative flex-1">
           <input

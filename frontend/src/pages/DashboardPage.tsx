@@ -3,10 +3,11 @@ import { useTasks } from '@/hooks/useTasks'
 import { useAuthStore } from '@/stores/authStore'
 import { TaskList } from '@/components/tasks/TaskList'
 import { TaskCreateModal } from '@/components/tasks/TaskCreateModal'
-import { CompanionCommandBar } from '@/components/companion/CompanionCommandBar'
-import { TodayTimeline } from '@/components/activity/TodayTimeline'
-import { Plus, CheckCircle2, Clock, Sparkles } from 'lucide-react'
-import type { Task } from '@/types/api'
+// import { CompanionCommandBar } from '@/components/companion/CompanionCommandBar'
+// import { TodayTimeline } from '@/components/activity/TodayTimeline'
+import { UpdatesTable } from '@/components/activity/UpdatesTable'
+import { Plus } from 'lucide-react' // CheckCircle2, Clock, Sparkles used by hidden stats
+// import type { Task } from '@/types/api'
 
 export default function DashboardPage() {
   const { data: tasks = [], isLoading, error } = useTasks()
@@ -14,9 +15,10 @@ export default function DashboardPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   // Compute basic stats
-  const pendingCount = tasks.filter((t: Task) => t.status === 'pending').length
-  const inProgressCount = tasks.filter((t: Task) => t.status === 'in_progress').length
-  const completedTodayCount = tasks.filter((t: Task) => t.status === 'done').length
+  // Hidden with the stats grid:
+  // const pendingCount = tasks.filter((t: Task) => t.status === 'pending').length
+  // const inProgressCount = tasks.filter((t: Task) => t.status === 'in_progress').length
+  // const completedTodayCount = tasks.filter((t: Task) => t.status === 'done').length
 
   return (
     <div className="space-y-6">
@@ -33,7 +35,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Grid Stats */}
+      {/* Hidden: stats grid
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 select-none">
         <div className="glass-card p-4 flex items-center gap-3">
           <div className="w-10 h-10 shrink-0 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
@@ -65,10 +67,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      */}
 
       <div className="space-y-6">
-        <CompanionCommandBar />
-        <TodayTimeline />
+        {/* Hidden: <CompanionCommandBar /> */}
+        {/* Hidden: <TodayTimeline /> */}
+        <UpdatesTable />
         
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

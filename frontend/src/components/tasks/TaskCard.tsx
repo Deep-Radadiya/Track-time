@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Task } from '@/types/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -8,7 +9,6 @@ import { useTaskAction, useDeleteTask } from '@/hooks/useTasks'
 import { StatusBadge } from './StatusBadge'
 import { SnoozePopover } from './SnoozePopover'
 import { TaskEditModal } from './TaskEditModal'
-import { ReminderResponsePanel } from './ReminderResponsePanel'
 import { formatDueDate } from '@/lib/utils'
 
 interface TaskCardProps {
@@ -18,7 +18,7 @@ interface TaskCardProps {
 export function TaskCard({ task }: TaskCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [notesExpanded, setNotesExpanded] = useState(false)
-  const [respondOpen, setRespondOpen] = useState(false)
+  const navigate = useNavigate()
 
   const actionMutation = useTaskAction()
   const deleteMutation = useDeleteTask()
@@ -205,30 +205,16 @@ export function TaskCard({ task }: TaskCardProps) {
           </button>
         )}
 
-        {/* Respond button — opens inline voice/text response panel */}
+        {/* Respond: opens the update page for this task */}
         <button
-          onClick={() => setRespondOpen((o) => !o)}
-          className={`ml-auto btn-ghost py-1 px-3 text-xs flex items-center gap-1 transition-all ${
-            respondOpen
-              ? 'bg-primary/15 border border-primary/30 text-primary'
-              : 'text-text-secondary hover:text-text-primary'
-          }`}
-          title="Respond to this reminder"
+          onClick={() => navigate(`/update/${task.id}`)}
+          className="ml-auto btn-ghost py-1 px-3 text-xs flex items-center gap-1 transition-all text-text-secondary hover:text-text-primary"
+          title="Write an update for this reminder"
         >
           <MessageSquare size={12} />
-          {respondOpen ? 'Close' : 'Respond'}
+          Add update
         </button>
       </div>
-
-      {/* Inline reminder response panel */}
-      <AnimatePresence>
-        {respondOpen && (
-          <ReminderResponsePanel
-            taskId={task.id}
-            onClose={() => setRespondOpen(false)}
-          />
-        )}
-      </AnimatePresence>
 
       <TaskEditModal open={isEditOpen} onClose={() => setIsEditOpen(false)} task={task} />
     </motion.div>

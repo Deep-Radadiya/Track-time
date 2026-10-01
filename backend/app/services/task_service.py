@@ -18,8 +18,9 @@ Design notes (see README for the longer version):
   would have produced two near-duplicate notifications anyway; in that case we
   merge them into one.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, time as dtime
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,6 +43,48 @@ async def get_task_for_user(db: AsyncSession, task_id: UUID, user_id: UUID) -> T
     return result.scalar_one_or_none()
 
 
+def next_window_slot(
+    after: datetime,
+    tz_name: str,
+    window_start: dtime,
+    window_end: dtime,
+    interval_minutes: int,
+    lunch_start: dtime | None = None,
+    lunch_end: dtime | None = None,
+) -> datetime | None:
+    """First reminder slot strictly after `after` (returned in UTC).
+
+    Slots start at window_start and repeat every interval_minutes up to window_end
+    in the user's local time. Slots inside [lunch_start, lunch_end) are skipped.
+    If today's slots are used up, rolls over to the next day's window.
+    """
+    if interval_minutes <= 0:
+        return None
+    try:
+        tz = ZoneInfo(tz_name or "UTC")
+    except Exception:
+        tz = ZoneInfo("UTC")
+    if after.tzinfo is None:
+        after = after.replace(tzinfo=timezone.utc)
+    local_after = after.astimezone(tz)
+    step = timedelta(minutes=interval_minutes)
+
+    for day_offset in range(8):
+        day = local_after.date() + timedelta(days=day_offset)
+        slot = datetime.combine(day, window_start, tzinfo=tz)
+        end = datetime.combine(day, window_end, tzinfo=tz)
+        while slot <= end:
+            in_lunch = (
+                lunch_start is not None
+                and lunch_end is not None
+                and lunch_start <= slot.timetz().replace(tzinfo=None) < lunch_end
+            )
+            if slot > local_after and not in_lunch:
+                return slot.astimezone(timezone.utc)
+            slot += step
+    return None
+
+
 def _advance_recurrence(task: Task, completed_at: datetime) -> None:
     """Advance next_due_at from the ORIGINAL anchor_time, never from server 'now'.
 
@@ -52,6 +95,9 @@ def _advance_recurrence(task: Task, completed_at: datetime) -> None:
     only ever the anchor stays authoritative.
     """
     if task.recurrence == Recurrence.none or task.anchor_time is None:
+        return
+    # Window tasks are rolled forward by the reminder worker (it knows the user's timezone).
+    if task.window_start is not None:
         return
 
     anchor = task.anchor_time

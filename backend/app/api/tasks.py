@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user
 from app.database import get_db
 from app.models import User, Task, TaskNote
+from app.models.task import Recurrence
 from app.models.activity import ActivitySource, ActivityType
 from app.schemas.task import TaskCreate, TaskUpdate, TaskOut, TaskActionRequest
 from app.services import activity_service, task_service, push_service, device_service
@@ -39,14 +41,29 @@ def _activity_for_status_change(status: str) -> ActivityType:
 
 @router.post("", response_model=TaskOut, status_code=201)
 async def create_task(payload: TaskCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+    recurrence = payload.recurrence
+    due_at = payload.due_at
+    if payload.window_start is not None:
+        # Time-window reminder: repeats every interval inside the window, skipping lunch.
+        recurrence = Recurrence.interval
+        due_at = task_service.next_window_slot(
+            datetime.now(timezone.utc), user.timezone, payload.window_start, payload.window_end,
+            payload.interval_minutes, payload.lunch_start, payload.lunch_end,
+        )
+        if due_at is None:
+            raise HTTPException(422, "No reminder slots fit in that time window")
     task = Task(
         user_id=user.id,
         title=payload.title,
-        recurrence=payload.recurrence,
-        due_at=payload.due_at,
-        anchor_time=payload.due_at,  # anchor starts at the first due_at
+        recurrence=recurrence,
+        due_at=due_at,
+        anchor_time=due_at,  # anchor starts at the first due_at
         interval_minutes=payload.interval_minutes,
-        next_due_at=payload.due_at,
+        next_due_at=due_at,
+        window_start=payload.window_start,
+        window_end=payload.window_end,
+        lunch_start=payload.lunch_start,
+        lunch_end=payload.lunch_end,
         category=payload.category,
         source=payload.source,
     )
