@@ -1,12 +1,12 @@
 // Reads settings from the .env file and checks the important ones exist.
 import 'dotenv/config';
 
-// Pasting a key into a hosting dashboard often adds extras: quotes, spaces, a line break, a trailing "=",
-// or even the name ("VAPID_PRIVATE_KEY=..."). A push key never contains those, so remove them.
+// Pasting a key into a hosting dashboard often adds extras: quotes, a trailing "=", the name ("VAPID_PRIVATE_KEY=..."),
+// or the NEXT line of the .env file. A push key is one single word, so keep only the first word and clean it.
 // Some tools also write "+" and "/" where push keys use "-" and "_", so convert those too.
 const stripQuotes = (v) => v.replace(/^["']+|["']+$/g, '');
 const cleanKey = (value) =>
-  stripQuotes(stripQuotes((value || '').trim()).replace(/^\s*VAPID_[A-Z_]*KEY\s*=/i, '').replace(/\s+/g, ''))
+  stripQuotes(stripQuotes((value || '').trim()).split(/\s+/)[0].replace(/^VAPID_[A-Z_]*KEY\s*=/i, ''))
     .replace(/=+$/, '')
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
