@@ -1,9 +1,15 @@
 // Reads settings from the .env file and checks the important ones exist.
 import 'dotenv/config';
 
-// Pasting a key into a hosting dashboard often adds quotes, spaces, a line break or a trailing "=".
-// A push key never contains those, so remove them.
-const cleanKey = (value) => (value || '').trim().replace(/^["']+|["']+$/g, '').trim().replace(/=+$/, '');
+// Pasting a key into a hosting dashboard often adds extras: quotes, spaces, a line break, a trailing "=",
+// or even the name ("VAPID_PRIVATE_KEY=..."). A push key never contains those, so remove them.
+// Some tools also write "+" and "/" where push keys use "-" and "_", so convert those too.
+const stripQuotes = (v) => v.replace(/^["']+|["']+$/g, '');
+const cleanKey = (value) =>
+  stripQuotes(stripQuotes((value || '').trim()).replace(/^\s*VAPID_[A-Z_]*KEY\s*=/i, '').replace(/\s+/g, ''))
+    .replace(/=+$/, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
 
 for (const name of ['MONGODB_URI', 'JWT_SECRET_KEY']) {
   if (!process.env[name]) throw new Error(`Missing ${name} in .env`);

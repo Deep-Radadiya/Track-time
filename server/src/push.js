@@ -9,13 +9,33 @@ import { Device } from './models/Device.js';
 // The caller should delete that device.
 export class GoneError extends Error {}
 
+// If the keys are missing or wrong, the server still starts (login, reminders list, etc. keep working),
+// but notifications are OFF. The log says why, and /health shows push: false.
+let pushReady = false;
 if (config.vapidPublicKey && config.vapidPrivateKey) {
-  webpush.setVapidDetails(config.vapidSubject, config.vapidPublicKey, config.vapidPrivateKey);
+  try {
+    webpush.setVapidDetails(config.vapidSubject, config.vapidPublicKey, config.vapidPrivateKey);
+    pushReady = true;
+  } catch (err) {
+    // Only lengths and character counts are printed, never the keys themselves.
+    const bad = (k) => (k.match(/[^A-Za-z0-9_-]/g) || []).length;
+    console.error(
+      `[Push] Notifications are OFF: ${err.message}. ` +
+      `Private key: ${config.vapidPrivateKey.length} characters (should be 43), ${bad(config.vapidPrivateKey)} not allowed. ` +
+      `Public key: ${config.vapidPublicKey.length} characters (should be 87), ${bad(config.vapidPublicKey)} not allowed.`
+    );
+  }
+} else {
+  console.warn('[Push] Notifications are OFF: VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY is not set.');
 }
+
+export const isPushReady = () => pushReady;
 
 // pushToken is the saved JSON text of the browser's subscription.
 // Returns true if sent, false on a small error. Throws GoneError if the device is gone.
 export async function sendPush(pushToken, payload) {
+  if (!pushReady) return false;
+
   let subscription;
   try {
     subscription = JSON.parse(pushToken);

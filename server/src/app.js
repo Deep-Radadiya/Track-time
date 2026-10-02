@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import { config } from './config.js';
+import { isPushReady } from './push.js';
 import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
 import voiceRoutes from './routes/voice.js';
@@ -15,7 +16,8 @@ const app = express();
 app.use(cors({ origin: config.corsOrigins, credentials: true }));
 app.use(express.json());
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// push: false means the notification keys are missing or wrong (see the server log).
+app.get('/health', (req, res) => res.json({ status: 'ok', push: isPushReady() }));
 app.use('/auth', authRoutes);
 app.use('/tasks', voiceRoutes);
 app.use('/tasks', taskRoutes);
