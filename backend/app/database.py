@@ -11,7 +11,9 @@ class Base(DeclarativeBase):
 
 
 # Async engine — used by FastAPI endpoints
-engine = create_async_engine(settings.DATABASE_URL, echo=False, future=True)
+# asyncpg wants ?ssl=require, psycopg2 wants ?sslmode=require (Neon gives sslmode)
+async_url = settings.DATABASE_URL.replace("sslmode=", "ssl=")
+engine = create_async_engine(async_url, echo=False, future=True)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
