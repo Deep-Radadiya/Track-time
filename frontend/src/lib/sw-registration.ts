@@ -1,6 +1,13 @@
 import { devicesApi } from '@/api/devices'
 import { useDeviceStore } from '@/stores/deviceStore'
 
+// The service worker runs outside the app, so it can't read VITE_API_URL itself.
+// We pass the server address in the URL, and sw.js reads it from there.
+function swUrl(): string {
+  const api = (import.meta.env.VITE_API_URL as string | undefined) || window.location.origin
+  return `/sw.js?api=${encodeURIComponent(api)}`
+}
+
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
@@ -24,7 +31,7 @@ export async function registerPushSubscription(): Promise<void> {
     return
   }
 
-  const registration = await navigator.serviceWorker.register('/sw.js')
+  const registration = await navigator.serviceWorker.register(swUrl())
   await registration.update()
   await navigator.serviceWorker.ready
 
@@ -56,7 +63,7 @@ export async function initServiceWorker(): Promise<void> {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js')
+    const registration = await navigator.serviceWorker.register(swUrl())
     await registration.update()
     await navigator.serviceWorker.ready
 

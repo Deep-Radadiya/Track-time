@@ -3,57 +3,51 @@
 SmartReminder is a full-stack reminder and productivity check-in app.
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS
-- Backend: FastAPI, PostgreSQL, Alembic (one process: the API also runs the reminder scheduler)
+- Backend (`server/`): Node.js, Express, MongoDB (one process: the API also runs the reminder scheduler)
 - Notifications: Web Push with VAPID keys
 - AI: Groq-backed voice parsing and productivity companion features
 
 ## Project Structure
 
 ```text
-backend/   FastAPI API + reminder scheduler, database models, migrations
+server/    Node.js API + reminder scheduler + MongoDB models (see server/README.md)
+backend/   the old Python (FastAPI) version, kept only as a reference
 frontend/  React app and service worker
 ```
 
 ## Required Environment
 
-Create `backend/.env` from `backend/.env.example` and set production values:
+Create `server/.env` from `server/.env.example` and set production values:
 
 ```env
-DATABASE_URL=postgresql+asyncpg://...
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/track_time
 JWT_SECRET_KEY=change-this-to-a-long-random-secret
 GROQ_API_KEY=your-groq-api-key
 VAPID_PUBLIC_KEY=your-vapid-public-key
 VAPID_PRIVATE_KEY=your-vapid-private-key
 VAPID_CLAIMS_SUB=mailto:you@example.com
 CORS_ORIGINS=https://your-frontend-domain.example
-ENVIRONMENT=production
 ```
 
 Create `frontend/.env.local` from `frontend/.env.example`:
 
 ```env
-VITE_API_URL=https://your-backend-domain.example
+VITE_API_URL=https://your-server-domain.example
 VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
 ```
 
 ## Local Development
 
-Backend:
+Start the server and the website together:
 
 ```bash
-cd backend
-./run.sh        # applies migrations and starts the API + scheduler on :8000
-```
-
-Only Postgres has to be running. There is no Redis, worker or beat to start.
-
-Frontend:
-
-```powershell
 cd frontend
 npm install
-npm run dev
+cd ../server && npm install && cd ../frontend
+npm run dev      # server on :8000, website on :5173
 ```
+
+Only MongoDB (Atlas or local) has to be reachable. There is no Redis, worker or beat to start.
 
 ## Checks
 
@@ -64,16 +58,7 @@ cd frontend
 npm.cmd run build
 ```
 
-Backend focused test:
-
-```powershell
-cd backend
-$env:DATABASE_URL='sqlite+aiosqlite:///dummy.db'
-$env:TEST_DATABASE_URL='sqlite+aiosqlite:///test.db'
-$env:JWT_SECRET_KEY='dev-only'
-$env:GROQ_API_KEY='dev-only'
-.\venv\Scripts\python.exe -m pytest tests\test_checkin_service.py
-```
+The server is described in `server/README.md`.
 
 ## GitHub Deployment Notes
 

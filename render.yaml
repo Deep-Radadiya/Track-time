@@ -1,0 +1,27 @@
+# Render "Blueprint": tells Render how to run the server. Render reads this file from the repo root.
+services:
+  - type: web
+    name: track-time-server
+    runtime: node
+    region: singapore        # same area as the database
+    plan: free
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: JWT_SECRET_KEY
+        generateValue: true  # Render makes a long random value for you
+      - key: MONGODB_URI
+        sync: false          # you type these in the Render dashboard, they are never stored in git
+      - key: CORS_ORIGINS
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_CLAIMS_SUB
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

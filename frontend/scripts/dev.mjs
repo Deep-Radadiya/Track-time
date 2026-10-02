@@ -4,10 +4,10 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
-const backendScript = path.resolve(root, '../../backend/run.sh')
+const serverDir = path.resolve(root, '../../server')
 
 const procs = [
-  spawn('bash', [backendScript], { stdio: 'inherit' }),
+  spawn('npm', ['run', 'dev'], { stdio: 'inherit', cwd: serverDir }),
   spawn('npx', ['vite'], { stdio: 'inherit', cwd: path.resolve(root, '..') }),
 ]
 
