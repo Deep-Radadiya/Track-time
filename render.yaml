@@ -2,12 +2,12 @@
 services:
   - type: web
     name: track-time-server
-    runtime: node
+    runtime: docker
     region: singapore        # same area as the database
     plan: free
     rootDir: server
-    buildCommand: npm ci
-    startCommand: npm start
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     autoDeploy: true
     envVars:
