@@ -13,7 +13,9 @@ source .venv/bin/activate
 # 2. Settings file
 if [ ! -f .env ]; then
   cp .env.example .env
-  echo "[backend] Created backend/.env from .env.example - add your keys there."
+  SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+  sed -i.bak "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=$SECRET/" .env && rm -f .env.bak
+  echo "[backend] Created backend/.env with a new login secret. Add your VAPID/AI keys there if you need them."
 fi
 
 # 3. Postgres (start it if it is installed with Homebrew but not running)
@@ -27,6 +29,12 @@ if ! pg_isready -q 2>/dev/null; then
 fi
 pg_isready -q 2>/dev/null || { echo "[backend] Postgres is not running. Install/start it (brew install postgresql@17)."; exit 1; }
 
-# 4. Database tables, then the server
+# 4. Database user + database (created once; does nothing if they exist)
+psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='reminder'" 2>/dev/null | grep -q 1 \
+  || psql -d postgres -qc "CREATE ROLE reminder LOGIN PASSWORD 'reminder'" >/dev/null
+psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='reminder_db'" 2>/dev/null | grep -q 1 \
+  || psql -d postgres -qc "CREATE DATABASE reminder_db OWNER reminder" >/dev/null
+
+# 5. Database tables, then the server
 alembic upgrade head || exit 1
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000
