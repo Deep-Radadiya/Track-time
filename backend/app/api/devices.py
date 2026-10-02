@@ -1,3 +1,4 @@
+"""Routes: register a browser for push notifications, and send test pushes."""
 from datetime import datetime, timezone
 import json
 from uuid import UUID

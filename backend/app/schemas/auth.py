@@ -1,3 +1,4 @@
+"""Shapes of the data sent to and from the /auth routes."""
 from datetime import time
 from uuid import UUID
 

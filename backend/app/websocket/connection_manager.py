@@ -1,3 +1,4 @@
+"""Keeps track of each user's open browser tabs so we can send them live updates."""
 import asyncio
 from uuid import UUID
 

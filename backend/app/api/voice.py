@@ -1,3 +1,4 @@
+"""Route: turns a spoken or typed sentence into a reminder using AI."""
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException

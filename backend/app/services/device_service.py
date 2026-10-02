@@ -1,3 +1,4 @@
+"""Saves and looks up the browsers (devices) a user allowed push notifications on."""
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

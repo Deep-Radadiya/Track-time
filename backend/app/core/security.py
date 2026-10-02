@@ -1,8 +1,8 @@
+"""Password hashing and login-token (JWT) creation/validation."""
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from jose import jwt, JWTError
-# pyrefly: ignore [missing-import]
 from passlib.context import CryptContext
 
 from app.config import settings

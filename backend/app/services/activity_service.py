@@ -1,3 +1,4 @@
+"""Saves and reads the activity log (created, started, your written updates...)."""
 import inspect
 from datetime import date, datetime, time, timezone
 from typing import Any

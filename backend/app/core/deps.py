@@ -1,3 +1,4 @@
+"""Shared route dependency: get_current_user reads the login token and returns the logged-in user."""
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status

@@ -70,7 +70,7 @@ def _check_due_reminders_sync():
     from app.database import SyncSessionLocal
 
     now = datetime.now(timezone.utc)
-    logger.info("[Beat] check_due_reminders — starting at %s", now.isoformat())
+    logger.info("[Job] check_due_reminders — starting at %s", now.isoformat())
     with SyncSessionLocal() as db:
         due_tasks = (
             db.query(Task)
@@ -97,7 +97,7 @@ def _check_due_reminders_sync():
             .all()
         )
 
-        logger.info("[Beat] check_due_reminders — found %d due task(s)", len(due_tasks))
+        logger.info("[Job] check_due_reminders — found %d due task(s)", len(due_tasks))
 
         for task in due_tasks:
             user = db.query(User).filter(User.id == task.user_id).first()
@@ -106,7 +106,7 @@ def _check_due_reminders_sync():
 
             is_quiet, push_to = _in_quiet_hours(user, now)
             if is_quiet and push_to:
-                logger.info("[Beat] Task %s deferred — user in quiet hours until %s", task.id, push_to.isoformat())
+                logger.info("[Job] Task %s deferred — user in quiet hours until %s", task.id, push_to.isoformat())
                 # Defer: push next_due_at (or snoozed_until) to quiet-hours end.
                 if task.snoozed_until and task.snoozed_until <= now:
                     task.snoozed_until = push_to
@@ -121,7 +121,7 @@ def _check_due_reminders_sync():
                 .all()
             )
             if not devices:
-                logger.debug("[Beat] Task %s has no push-enabled devices — skipping", task.id)
+                logger.debug("[Job] Task %s has no push-enabled devices — skipping", task.id)
                 _roll_window_forward(task, user, now)
                 continue
 
@@ -163,7 +163,7 @@ def _check_due_reminders_sync():
             _roll_window_forward(task, user, now)
 
         db.commit()
-        logger.info("[Beat] check_due_reminders — done")
+        logger.info("[Job] check_due_reminders — done")
 
 
 def check_due_reminders():

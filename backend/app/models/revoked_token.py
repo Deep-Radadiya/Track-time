@@ -1,3 +1,4 @@
+"""Revoked refresh tokens (logged out or already used), so they can't be used again."""
 from datetime import datetime
 
 from sqlalchemy import DateTime, String

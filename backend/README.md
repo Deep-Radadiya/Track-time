@@ -1,128 +1,108 @@
-# Smart Reminder / Task Management Backend
+# SmartReminder backend
 
-FastAPI + Postgres backend for a voice-aware, multi-device reminder
-app. Backend only (per spec) — no frontend included.
+A small web server (FastAPI + Postgres) that stores reminders, sends push notifications
+when they are due, and keeps a log of the updates people write.
 
-## Stack
-FastAPI (async) · PostgreSQL via async SQLAlchemy 2.0 + asyncpg · Alembic ·
-JWT auth (python-jose + passlib) · APScheduler (runs inside the API process) ·
-Groq API (voice parsing + day-end summaries) · pywebpush ·
-`./run.sh` starts everything (needs only Postgres).
+## Run it
 
-## Quick start
-
-1. Copy `.env.example` to `.env` and fill in real values — at minimum
-   `JWT_SECRET_KEY`, `GROQ_API_KEY`, and `VAPID_PUBLIC_KEY` /
-   `VAPID_PRIVATE_KEY` (generate with `python -m pywebpush.vapid` or
-   `npx web-push generate-vapid-keys`).
-2. `docker compose up --build`
-3. Visit `http://localhost:8000/docs` for interactive Swagger UI; `/health`
-   should return `{"status": "ok"}`.
-4. Run migrations (first time / after model changes):
-   `docker compose exec backend alembic upgrade head`
-5. Run tests: `docker compose exec backend pytest -v`
-
-Full command list is at the bottom of this file.
-
-## Project layout
-
-```
-app/
-  main.py            FastAPI app + route registration, /health
-  config.py          pydantic-settings, reads .env
-  database.py         async engine + session factory
-  models/             SQLAlchemy: user, task, task_note, device, notification_log
-  schemas/             Pydantic request/response + the voice-parsing schema
-                        Claude's output is validated against
-  api/                route handlers (auth, tasks, voice, devices, summary, ws)
-  services/            business logic, separate from routes:
-                          auth_service, task_service (state machine),
-                          claude_service (LLM calls + validation),
-                          push_service, device_service
-  workers/             reminder_tasks.py, checkin_tasks.py, summary_tasks.py (jobs run by scheduler.py)
-  websocket/           connection_manager.py + the /ws route
-  core/                security.py (JWT/password hashing), deps.py (auth dep)
-alembic/               migrations (one hand-written initial migration included)
-tests/                 pytest: state-machine unit tests + voice fixture tests
-fixtures/              voice_transcripts.json — transcript -> expected JSON
+```bash
+./run.sh
 ```
 
-## Design decisions (so you can defend them)
+Or start the whole app (backend + frontend) from `frontend/` with `npm run dev`.
 
-**Why scheduling is server-driven (a scheduler in the API), not client timers.**
-A `setTimeout`/JS-interval-based reminder dies the instant a tab closes, a
-phone goes to sleep, or the OS kills the background app — exactly the
-moments a reminder app most needs to still work. The scheduler runs on the
-server, completely decoupled from whether any
-client is even open, so "what's due right now" has one single source of
-truth and one clock. It also sidesteps per-device clock skew: the server
-decides what's due, not whichever phone happens to be awake.
+`run.sh` sets everything up on the first run, applies the database tables, and starts the
+server on http://localhost:8000. The only thing it needs is **Postgres**. Settings live in
+`backend/.env` (copy `.env.example`). Open http://localhost:8000/docs to try every route.
 
-**Why Claude's output is validated against a Pydantic schema, not trusted
-directly.** The LLM is an untrusted external input in an otherwise fully
-typed system — it can hallucinate fields, return slightly malformed JSON,
-guess a wrong date format, or wrap output in markdown fences. `claude_service.py`
-strips fences, `json.loads`s the result, and then runs it through
-`ParsedVoiceResult.model_validate(...)` (or `SummaryOut` for the day-end
-summary) before anything downstream ever sees it. If validation fails we
-raise and surface a 502 to the client rather than silently writing bad data
-or guessing. Voice-parsed results are also never auto-saved — `/tasks/parse-voice`
-only returns a draft for the user to confirm, so even a subtly wrong parse
-can't silently create a task.
+Run the tests with `python -m pytest tests`.
 
-**Why every timestamp is stored in UTC.** `due_at` / `next_due_at` /
-`snoozed_until` / `anchor_time` are all UTC so "is this due" is a single
-`<= now_utc` comparison in the scheduling hot path, with no DST or
-timezone-conversion ambiguity. Local time only enters at the edges where it's
-actually the meaningful unit: quiet-hours math (`reminder_tasks.py`) and
-deciding when "9pm" is for each user's day-end summary
-(`summary_tasks.py`) — both convert UTC to the user's IANA timezone via
-`zoneinfo`, do the comparison, and convert back to UTC before touching the
-database.
+## How it works in one minute
 
-**Idempotency / last-write-wins.** Every task carries `last_action_client_ts`.
-`task_service.apply_action()` rejects (no-ops) any action whose
-`client_timestamp` isn't strictly newer than what's already been applied —
-so replays are no-ops, and out-of-order delivery from a flaky mobile
-connection can't undo a newer action with a stale one. This is ordering by
-*client-asserted event time*, not by server arrival order.
+1. The browser talks to the **routes** in `app/api/`.
+2. Routes call **services** in `app/services/` for the real logic.
+3. Services read and write the database through the **models** in `app/models/`.
+4. A **scheduler** (`app/scheduler.py`) runs inside the same server. Every minute it runs
+   the **jobs** in `app/jobs/`: find reminders that are due and send a push notification.
 
-**Recurrence never drifts.** `next_due_at` is always recomputed from the
-original `anchor_time` plus N whole intervals — never from "now" or from
-the completion timestamp directly. If you complete a daily task 5 hours
-late, the next occurrence is still exactly anchor + 1 day, not
-completion-time + 1 day; otherwise a task completed a little late every day
-would slowly creep later and later.
+```
+Browser  ->  api/ (routes)  ->  services/ (logic)  ->  models/ (database tables)
+                                      ^
+scheduler.py  ->  jobs/ (every minute: what is due? send push)
+```
 
-**Snooze vs. recurrence.** Snoozing sets `snoozed_until` and bumps the
-snooze counters but does **not** touch `next_due_at` — unless the new
-snoozed time lands within 15–20 minutes of the already-scheduled
-`next_due_at`, in which case they're merged into a single occurrence so the
-user doesn't get two near-duplicate reminders minutes apart.
+There is no separate worker, queue or Redis. One process does everything.
 
-**Cross-device notification dismissal (Step 7).** When a task is marked
-`done`, a silent push using the same notification tag
-(`task-{id}-{due_at_iso}`) is sent to every *other* registered device, so a
-reminder dismissed on your watch also disappears from your phone and laptop.
+## Folder map
 
-## Notes / things to wire up for production
+| Folder / file | What is in it |
+|---|---|
+| `app/main.py` | Starts the app and registers the routes |
+| `app/config.py` | Settings read from `.env` |
+| `app/database.py` | Database connections |
+| `app/scheduler.py` | Runs the jobs on a timer |
+| `app/api/` | Routes. One file per area: `auth`, `tasks`, `activities`, `devices`, `summary`, `voice`, `companion` |
+| `app/services/` | The logic behind the routes (see below) |
+| `app/models/` | Database tables |
+| `app/schemas/` | The shape of data going in and out of the routes |
+| `app/jobs/` | Jobs run by the scheduler |
+| `app/websocket/` | Live updates to open browser tabs |
+| `app/core/` | Login helpers (password hashing, tokens) |
+| `alembic/versions/` | Database changes, one file per change |
+| `tests/` | Automated tests |
 
-- The day-end summary is currently sent as a push payload but not persisted
-  to its own table — the spec's schema didn't include a `summaries` table,
-  so add one (`summaries: id, user_id, date, summary, highlight, concern,
-  tomorrow_suggestion`) if you want history/GET endpoints for past summaries.
-- `pick_target_devices` / quiet-hours / escalation logic live in
-  `app/services/device_service.py` and `app/workers/reminder_tasks.py` —
-  read those two files together to follow the full notification-targeting
-  flow end to end.
-- VAPID keys are required for real push delivery; without them
-  `pywebpush` calls will fail (this is expected and harmless in dev/testing
-  without a real subscriber).
-- `tests/test_voice_fixtures.py` has a live-API test class that's skipped
-  automatically unless `GROQ_API_KEY` is set in the test environment —
-  run it explicitly once you have a key to validate real model output
-  against the fixtures, not just their shape.
+## The main ideas
 
-## All commands you'll need
+**Reminders (tasks).** A reminder is a row in the `tasks` table (`app/models/task.py`).
+The important field is `next_due_at`: the next moment it should fire. A reminder can
+have a daily time window (`window_start` to `window_end`), an interval (`interval_minutes`)
+and a lunch break (`lunch_start` to `lunch_end`). `next_window_slot` in
+`app/services/task_service.py` works out the next time it should fire inside the window,
+skipping lunch.
 
-See the bottom of the chat response / `COMMANDS.md` for the full list.
+**Sending notifications.** Every minute, `app/jobs/reminder_tasks.py` finds reminders whose
+`next_due_at` has passed, sends a Web Push to the user's browsers
+(`app/services/push_service.py`), then moves `next_due_at` to the next slot.
+Browsers that allowed notifications are saved in the `devices` table.
+
+**Updates.** When someone writes an update about a reminder, the route in
+`app/api/activities.py` saves it in the `reminder_activities` table. The raw text is kept
+in the `metadata` column.
+
+**Login.** `app/api/auth.py`. Passwords are hashed. After login the browser gets a short
+access token and a longer refresh token. A refresh token can be used once; used or
+logged-out tokens are stored in the `revoked_tokens` table.
+
+**AI features (optional).** They need a Groq or OpenAI key in `.env`. Without a key the
+rest of the app still works.
+- `app/api/voice.py` and `services/voice_service.py`: turn a spoken sentence into a reminder.
+- `app/api/companion.py` and `services/companion/`: the chat assistant. `chat_service.py`
+  runs the flow, `prompt_builder.py` builds the instructions for the AI, `intent_parser.py`
+  reads its answer, and `task_actions.py` applies it to your reminders.
+- `app/jobs/summary_tasks.py` and `services/summary_service.py`: the daily recap at 9 PM
+  in each user's own time zone.
+- `app/jobs/checkin_tasks.py`: asks "what are you working on?" during working hours.
+
+## Common changes
+
+**Add a field to reminders**
+1. Add the column in `app/models/task.py`.
+2. Add the field in `app/schemas/task.py`.
+3. Create a migration in `alembic/versions/` (copy the latest file as a template) and run
+   `alembic upgrade head`.
+4. Use the field in `app/api/tasks.py`.
+
+**Add a new scheduled job**
+1. Write the function in `app/jobs/`.
+2. Register it in `app/scheduler.py`.
+
+## Keys you need
+
+| Setting in `.env` | What for |
+|---|---|
+| `DATABASE_URL` | Your Postgres database |
+| `JWT_SECRET_KEY` | Signs logins. Use a long random value. |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web Push. The frontend needs the same public key. |
+| `CORS_ORIGINS` | Website addresses allowed to call the API |
+| `GROQ_API_KEY` | AI chat and summaries (optional) |
+| `OPENAI_API_KEY` | Voice parsing (optional) |

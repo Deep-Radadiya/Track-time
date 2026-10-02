@@ -32,7 +32,7 @@ router = APIRouter(prefix="/dev", tags=["dev"])
 @router.post("/trigger-checkin")
 async def trigger_checkin(user: User = Depends(get_current_user)):
     """Send a check-in reminder to the authenticated user right now."""
-    from app.workers.checkin_tasks import send_delayed_checkin_reminder
+    from app.jobs.checkin_tasks import send_delayed_checkin_reminder
     await asyncio.to_thread(send_delayed_checkin_reminder, str(user.id))
     logger.info("[Dev] trigger-checkin ran for user %s", user.id)
     return {"status": "done", "user_id": str(user.id), "triggered_at": datetime.now(timezone.utc).isoformat()}
@@ -41,7 +41,7 @@ async def trigger_checkin(user: User = Depends(get_current_user)):
 @router.post("/trigger-reminder-check")
 async def trigger_reminder_check(user: User = Depends(get_current_user)):
     """Run check_due_reminders immediately (checks ALL users)."""
-    from app.workers.reminder_tasks import check_due_reminders
+    from app.jobs.reminder_tasks import check_due_reminders
     await asyncio.to_thread(check_due_reminders)
     logger.info("[Dev] trigger-reminder-check ran by user %s", user.id)
     return {"status": "done", "triggered_at": datetime.now(timezone.utc).isoformat()}

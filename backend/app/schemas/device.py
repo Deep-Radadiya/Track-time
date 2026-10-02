@@ -1,3 +1,4 @@
+"""Shapes of the data sent to and from the /devices routes."""
 from datetime import datetime
 from uuid import UUID
 

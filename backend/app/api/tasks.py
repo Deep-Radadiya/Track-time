@@ -1,3 +1,4 @@
+"""Routes: create, list, edit, delete reminders, and actions like done / snooze / start."""
 import asyncio
 from datetime import datetime, timezone
 from uuid import UUID

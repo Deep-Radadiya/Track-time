@@ -1,3 +1,4 @@
+"""All settings, read from environment variables or backend/.env (database URL, secrets, API keys)."""
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

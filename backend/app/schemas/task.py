@@ -1,3 +1,4 @@
+"""Shapes of the data sent to and from the /tasks routes."""
 from datetime import datetime, time
 from uuid import UUID
 

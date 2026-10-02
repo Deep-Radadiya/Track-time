@@ -1,3 +1,4 @@
+"""Device table (one row per browser that allowed push) and a log of sent notifications."""
 # from app.models import User
 import uuid
 from datetime import datetime

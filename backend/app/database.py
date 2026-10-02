@@ -1,3 +1,4 @@
+"""Database connections: an async one for API requests and a sync one for the background jobs."""
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session

@@ -26,9 +26,9 @@ def _safe(fn):
 
 
 def start() -> None:
-    from app.workers.checkin_tasks import run_hourly_checkins
-    from app.workers.reminder_tasks import check_due_reminders
-    from app.workers.summary_tasks import run_day_end_summaries
+    from app.jobs.checkin_tasks import run_hourly_checkins
+    from app.jobs.reminder_tasks import check_due_reminders
+    from app.jobs.summary_tasks import run_day_end_summaries
 
     if scheduler.running:
         return
@@ -48,7 +48,7 @@ def stop() -> None:
 
 def schedule_delayed_checkin(user_id: str, minutes: int = 10) -> None:
     """Send a check-in reminder to one user after `minutes` (the 'remind me later' button)."""
-    from app.workers.checkin_tasks import send_delayed_checkin_reminder
+    from app.jobs.checkin_tasks import send_delayed_checkin_reminder
 
     scheduler.add_job(
         _safe(lambda: send_delayed_checkin_reminder(user_id)),

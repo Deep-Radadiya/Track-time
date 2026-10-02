@@ -1,3 +1,4 @@
+"""User table: email, hashed password, timezone and reminder settings."""
 import uuid
 from datetime import datetime, time
 

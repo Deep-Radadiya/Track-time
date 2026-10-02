@@ -1,3 +1,4 @@
+"""Shapes of the data sent to and from the /voice route."""
 from pydantic import BaseModel, field_validator
 
 

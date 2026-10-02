@@ -1,3 +1,4 @@
+"""Job: asks users 'what are you working on?' at their chosen interval during working hours."""
 import logging
 from datetime import datetime, timezone
 import uuid
@@ -20,7 +21,7 @@ def run_hourly_checkins():
     working hours, who have checkins enabled, and who haven't checked in 
     within their configured checkin interval.
     """
-    logger.info("[Beat] run_hourly_checkins — starting")
+    logger.info("[Job] run_hourly_checkins — starting")
     with SyncSessionLocal() as db:
         users = db.execute(select(User)).scalars().all()
         now_utc = datetime.now(timezone.utc)
@@ -51,28 +52,28 @@ def run_hourly_checkins():
             if is_working_hours:
                 expired = checkin_service.mark_expired_hourly_checkins_missed(db, user, now_utc)
                 if expired:
-                    logger.debug("[Beat] Marked %d expired reminders missed for user %s", expired, user.id)
+                    logger.debug("[Job] Marked %d expired reminders missed for user %s", expired, user.id)
                     try:
                         db.commit()
                     except Exception:
-                        logger.exception("[Beat] Failed to commit expired reminder updates for user %s", user.id)
+                        logger.exception("[Job] Failed to commit expired reminder updates for user %s", user.id)
 
                 if checkin_service.sync_needs_checkin(db, user, now_utc):
                     slot_start = checkin_service.slot_start_utc(user, now_utc)
                     reminder = None
                     if slot_start is not None:
                         reminder = checkin_service.create_pending_hourly_checkin(db, user, slot_start)
-                        logger.info("[Beat] Created pending reminder %s for user %s at %s", getattr(reminder, 'id', None), user.id, slot_start)
+                        logger.info("[Job] Created pending reminder %s for user %s at %s", getattr(reminder, 'id', None), user.id, slot_start)
                         try:
                             db.commit()
                         except Exception:
-                            logger.exception("[Beat] Failed to commit created reminder for user %s", user.id)
+                            logger.exception("[Job] Failed to commit created reminder for user %s", user.id)
 
-                    logger.info("[Beat] Sending checkin to user %s (local hour=%d)", user.id, local_time.hour)
+                    logger.info("[Job] Sending checkin to user %s (local hour=%d)", user.id, local_time.hour)
                     try:
                         _send_checkin_reminder(db, user, reminder)
                     except Exception:
-                        logger.exception("[Beat] _send_checkin_reminder failed for user %s", user.id)
+                        logger.exception("[Job] _send_checkin_reminder failed for user %s", user.id)
                     triggered += 1
 def send_delayed_checkin_reminder(user_id_str: str):
     """

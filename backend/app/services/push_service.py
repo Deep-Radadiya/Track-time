@@ -1,6 +1,6 @@
 """
 Web Push wrapper around pywebpush. Device targeting and quiet-hours logic
-live in workers/reminder_tasks.py; this module just knows how to send.
+live in jobs/reminder_tasks.py; this module just knows how to send.
 """
 import json
 import logging

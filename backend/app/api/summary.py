@@ -1,3 +1,4 @@
+"""Routes: the daily summary (AI-written recap of your day) and its history."""
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, Query
@@ -11,7 +12,7 @@ from app.models import User
 from app.models.companion import DailySummary
 from app.schemas.companion import SummaryHistoryOut, DailySummaryOut
 from app.schemas.device import SummaryOut
-from app.workers.summary_tasks import build_daily_stats
+from app.jobs.summary_tasks import build_daily_stats
 from app.services import summary_service
 
 router = APIRouter(prefix="/summary", tags=["summary"])

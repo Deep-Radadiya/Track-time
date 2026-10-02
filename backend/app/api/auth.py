@@ -1,3 +1,4 @@
+"""Routes: /auth/signup, /login, /refresh, /logout, /me."""
 import hashlib
 from datetime import datetime, timedelta, timezone
 

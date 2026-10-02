@@ -1,3 +1,4 @@
+"""App entry point: creates the FastAPI app, starts the scheduler, and registers all routes."""
 import asyncio
 import logging
 import os
@@ -5,7 +6,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-# from app.api import auth, tasks, voice, devices, summary, companion
 from app.api import auth, tasks, voice, devices, summary, companion, activities
 from app.config import settings
 from app.websocket import routes as ws_routes

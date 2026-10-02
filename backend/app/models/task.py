@@ -1,3 +1,4 @@
+"""Task (reminder) and TaskNote tables, plus the status/recurrence options."""
 import enum
 import uuid
 from datetime import datetime, time
