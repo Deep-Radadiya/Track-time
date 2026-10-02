@@ -287,7 +287,7 @@ export default function SettingsPage() {
                         'relative flex flex-col items-start gap-1.5 rounded-xl border p-3 text-left transition-all duration-200',
                         isActive
                           ? 'border-primary bg-primary/10 shadow-[0_0_0_1px] shadow-primary/30'
-                          : 'border-border/40 bg-white/[0.02] hover:border-primary/40 hover:bg-white/5',
+                          : 'border-border/40 bg-ink/[0.02] hover:border-primary/40 hover:bg-ink/5',
                       ].join(' ')}
                     >
                       {isActive && (
@@ -331,7 +331,7 @@ export default function SettingsPage() {
                         'rounded-xl border py-2.5 px-3 text-xs font-medium transition-all duration-200 text-center',
                         isActive
                           ? 'border-primary bg-primary/10 text-primary shadow-[0_0_0_1px] shadow-primary/30'
-                          : 'border-border/40 bg-white/[0.02] text-text-secondary hover:border-primary/40 hover:bg-white/5',
+                          : 'border-border/40 bg-ink/[0.02] text-text-secondary hover:border-primary/40 hover:bg-ink/5',
                       ].join(' ')}
                     >
                       {opt.label}
@@ -422,9 +422,9 @@ export default function SettingsPage() {
         ) : (
           <div className="space-y-3">
             {devices.map((d) => (
-              <div key={d.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-3 border border-border/40 rounded-xl bg-white/[0.01]">
+              <div key={d.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-3 border border-border/40 rounded-xl bg-ink/[0.01]">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 shrink-0 rounded-lg bg-white/5 flex items-center justify-center text-text-secondary">
+                  <div className="w-8 h-8 shrink-0 rounded-lg bg-ink/5 flex items-center justify-center text-text-secondary">
                     <Laptop size={18} />
                   </div>
                   <div className="min-w-0">
@@ -445,7 +445,7 @@ export default function SettingsPage() {
                   )}
                   <button
                     onClick={() => handlePing(d.id)}
-                    className="btn-ghost py-1 px-2.5 text-xs bg-white/5 border border-border hover:bg-white/10 flex items-center gap-1.5 text-text-secondary"
+                    className="btn-ghost py-1 px-2.5 text-xs bg-ink/5 border border-border hover:bg-ink/10 flex items-center gap-1.5 text-text-secondary"
                     disabled={pinging === d.id}
                   >
                     Ping

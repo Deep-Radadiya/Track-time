@@ -26,9 +26,9 @@ export default function TasksPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="glass-card p-4 space-y-3 animate-pulse">
-                <div className="h-4 bg-white/5 rounded-md w-3/4" />
-                <div className="h-3 bg-white/5 rounded-md w-1/2" />
-                <div className="h-8 bg-white/5 rounded-md w-full mt-2" />
+                <div className="h-4 bg-ink/5 rounded-md w-3/4" />
+                <div className="h-3 bg-ink/5 rounded-md w-1/2" />
+                <div className="h-8 bg-ink/5 rounded-md w-full mt-2" />
               </div>
             ))}
           </div>

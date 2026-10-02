@@ -1,29 +1,31 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  darkMode: ['class', '[data-theme="dark"]'],
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
         bg: {
-          DEFAULT: '#0a0a0f',
-          surface: '#111118',
-          elevated: '#1a1a24',
+          DEFAULT: 'rgb(var(--bg) / <alpha-value>)',
+          surface: 'rgb(var(--surface) / <alpha-value>)',
+          elevated: 'rgb(var(--elevated) / <alpha-value>)',
         },
-        border: { DEFAULT: '#2a2a3a', subtle: '#1e1e2e' },
+        border: { DEFAULT: 'rgb(var(--border) / <alpha-value>)', subtle: 'rgb(var(--border) / 0.5)' },
         primary: {
-          DEFAULT: '#6366f1',
-          glow: 'rgba(99,102,241,0.15)',
-          dark: '#4f52d9',
+          DEFAULT: 'rgb(var(--primary) / <alpha-value>)',
+          glow: 'rgb(var(--primary) / 0.15)',
+          dark: 'rgb(var(--primary-dark) / <alpha-value>)',
         },
-        accent: { DEFAULT: '#22d3ee', dark: '#06b6d4' },
-        success: '#10b981',
-        warning: '#f59e0b',
-        danger: '#ef4444',
+        accent: { DEFAULT: 'rgb(var(--accent) / <alpha-value>)', dark: 'rgb(var(--accent) / 0.8)' },
+        success: 'rgb(var(--success) / <alpha-value>)',
+        warning: 'rgb(var(--warning) / <alpha-value>)',
+        danger: 'rgb(var(--danger) / <alpha-value>)',
+        ink: 'rgb(var(--ink) / <alpha-value>)',
         text: {
-          primary: '#f1f5f9',
-          secondary: '#94a3b8',
-          muted: '#475569',
+          primary: 'rgb(var(--text-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--text-muted) / <alpha-value>)',
         },
       },
       fontFamily: {

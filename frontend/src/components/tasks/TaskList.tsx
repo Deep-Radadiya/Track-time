@@ -23,7 +23,7 @@ export function TaskList({ tasks }: TaskListProps) {
   const totalCount = tasks.length
   if (totalCount === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-border/50 rounded-2xl bg-white/[0.01]">
+      <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-border/50 rounded-2xl bg-ink/[0.01]">
         <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 text-primary animate-pulse-slow">
           <AlertCircle size={28} />
         </div>

@@ -105,8 +105,8 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
   return (
     <Dialog.Root open={true} onOpenChange={(o: boolean) => { if (!o && !createMutation.isPending) onClose() }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-elevated border border-border p-6 shadow-2xl animate-fade-in focus:outline-none max-h-[90vh] overflow-y-auto">
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-fade-in" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-surface border border-border p-4 sm:p-6 shadow-2xl animate-fade-in focus:outline-none max-h-[88dvh] overflow-y-auto">
           
           {success ? (
             <div className="text-center py-8 space-y-4">
@@ -127,7 +127,7 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
                 <Dialog.Title className="text-lg font-bold text-text-primary flex items-center gap-2">
                   <Sparkles size={18} className="text-accent" /> Confirm Parsed Reminders
                 </Dialog.Title>
-                <Dialog.Close className="text-text-secondary hover:text-text-primary p-1 rounded-md hover:bg-white/5 transition-all">
+                <Dialog.Close className="text-text-secondary hover:text-text-primary p-1 rounded-md hover:bg-ink/5 transition-all">
                   <X size={18} />
                 </Dialog.Close>
               </div>
@@ -143,7 +143,7 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
                     const isAmbiguousTime = field.ambiguous_fields?.includes('due_time')
 
                     return (
-                      <div key={field.id} className="p-4 border border-border/60 rounded-xl bg-white/[0.01] space-y-4 relative">
+                      <div key={field.id} className="p-4 border border-border/60 rounded-xl bg-ink/[0.01] space-y-4 relative">
                         <span className="absolute top-3 right-3 text-xs text-text-muted font-mono select-none">
                           Task #{idx + 1}
                         </span>
@@ -160,7 +160,7 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4">
                           <div>
                             <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1 flex items-center gap-1">
                               Due Date
@@ -173,7 +173,7 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
                             <input
                               type="date"
                               {...register(`tasks.${idx}.due_date` as const)}
-                              className={`input-field [color-scheme:dark] ${isAmbiguousDate ? 'border-warning/50 focus:ring-warning/50' : ''}`}
+                              className={`input-field  ${isAmbiguousDate ? 'border-warning/50 focus:ring-warning/50' : ''}`}
                               disabled={createMutation.isPending}
                             />
                             {isAmbiguousDate && (
@@ -193,7 +193,7 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
                             <input
                               type="time"
                               {...register(`tasks.${idx}.due_time` as const)}
-                              className={`input-field [color-scheme:dark] ${isAmbiguousTime ? 'border-warning/50 focus:ring-warning/50' : ''}`}
+                              className={`input-field  ${isAmbiguousTime ? 'border-warning/50 focus:ring-warning/50' : ''}`}
                               disabled={createMutation.isPending}
                             />
                             {isAmbiguousTime && (
@@ -202,7 +202,7 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4">
                           <div>
                             <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
                               Recurrence
@@ -253,7 +253,7 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
                   })}
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-border/30">
+                <div className="flex justify-end gap-3 pt-3 border-t border-border/30 sticky -bottom-4 sm:-bottom-6 bg-bg-surface -mb-4 sm:-mb-6 pb-4 sm:pb-6">
                   <button
                     type="button"
                     onClick={onClose}

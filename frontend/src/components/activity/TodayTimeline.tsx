@@ -34,7 +34,7 @@ const ACTIVITY_META: Record<ActivityType, { label: string; icon: typeof Plus; to
   voice_update: { label: 'Voice Update', icon: Mic, tone: 'text-accent bg-accent/10 border-accent/20' },
   text_update: { label: 'Text Update', icon: FileText, tone: 'text-primary bg-primary/10 border-primary/20' },
   companion_action: { label: 'Companion Action', icon: Sparkles, tone: 'text-primary bg-primary/10 border-primary/20' },
-  status_update: { label: 'Update', icon: FileText, tone: 'text-text-secondary bg-white/5 border-white/10' },
+  status_update: { label: 'Update', icon: FileText, tone: 'text-text-secondary bg-ink/5 border-ink/10' },
 }
 
 // Where each reminder stands right now (looked up from the live task list).
@@ -82,7 +82,7 @@ function displayMeta(activity: ReminderActivity) {
     return {
       label: 'Missed',
       icon: Clock3,
-      tone: 'text-text-muted bg-white/5 border-white/10',
+      tone: 'text-text-muted bg-ink/5 border-ink/10',
     }
   }
 
@@ -99,7 +99,7 @@ function TimelineRow({ activity, taskStatus }: { activity: ReminderActivity; tas
   const timestamp = new Date(activity.timestamp)
 
   return (
-    <div className="grid grid-cols-[4.25rem_2rem_minmax(0,1.1fr)_minmax(0,1fr)] gap-3 px-4 py-3 border-t border-white/[0.06] first:border-t-0 items-start">
+    <div className="grid grid-cols-[4.25rem_2rem_minmax(0,1.1fr)_minmax(0,1fr)] gap-3 px-4 py-3 border-t border-ink/[0.06] first:border-t-0 items-start">
       <div className="text-xs leading-tight">
         <div className="font-semibold text-text-primary">{format(timestamp, 'h:mm a')}</div>
         <div className="text-text-muted mt-1">{formatDistanceToNowStrict(timestamp, { addSuffix: true })}</div>
@@ -155,7 +155,7 @@ export function TodayTimeline() {
       {isLoading ? (
         <div className="px-4 pb-4 space-y-3">
           {[0, 1, 2].map((item) => (
-            <div key={item} className="h-12 rounded-lg bg-white/[0.04] animate-pulse" />
+            <div key={item} className="h-12 rounded-lg bg-ink/[0.04] animate-pulse" />
           ))}
         </div>
       ) : error ? (

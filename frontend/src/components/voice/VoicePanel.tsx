@@ -121,7 +121,7 @@ export function VoicePanel() {
             className={`w-20 h-20 rounded-full flex items-center justify-center border transition-all duration-300 relative z-10 ${
               isRecording
                 ? 'bg-danger border-danger/30 text-white shadow-glow hover:bg-danger/80'
-                : 'bg-white/5 border-border hover:bg-white/10 hover:border-text-secondary text-text-primary'
+                : 'bg-ink/5 border-border hover:bg-ink/10 hover:border-text-secondary text-text-primary'
             }`}
           >
             {isRecording ? <MicOff size={28} /> : <Mic size={28} />}

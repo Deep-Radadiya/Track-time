@@ -66,7 +66,7 @@ const STATUS_OPTIONS: Array<{
     value: 'focused',
     label: 'Productive',
     emoji: '✅',
-    color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20',
+    color: 'text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20',
     icon: <CheckCircle2 size={18} />,
     description: 'On a roll!',
   },
@@ -82,7 +82,7 @@ const STATUS_OPTIONS: Array<{
     value: 'distracted',
     label: 'Distracted',
     emoji: '❌',
-    color: 'text-red-400 border-red-500/30 bg-red-500/10 hover:bg-red-500/20',
+    color: 'text-red-600 dark:text-red-400 border-red-500/30 bg-red-500/10 hover:bg-red-500/20',
     icon: <XCircle size={18} />,
     description: 'Off track',
   },
@@ -102,7 +102,7 @@ function StepDots({ current }: { current: Step }) {
                 ? 'bg-accent w-5 scale-110'
                 : steps.indexOf(current) > i
                 ? 'bg-success'
-                : 'bg-white/15'
+                : 'bg-ink/15'
             }`}
           />
         </div>
@@ -402,7 +402,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose()
         }}
@@ -440,7 +440,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-white/5 transition-all"
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-ink/5 transition-all"
               >
                 <X size={15} />
               </button>
@@ -467,7 +467,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex flex-col items-center gap-2 py-6 text-center"
                       >
-                        <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-400">
+                        <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                           <CheckCircle2 size={26} />
                         </div>
                         <p className="text-sm font-semibold text-text-primary">Check-in saved!</p>
@@ -492,7 +492,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                                 className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border transition-all text-sm font-semibold ${
                                   selectedStatus === opt.value
                                     ? `${opt.color} ring-2 ring-offset-1 ring-offset-bg-elevated ring-current scale-[1.04]`
-                                    : 'text-text-secondary border-border bg-white/3 hover:bg-white/8'
+                                    : 'text-text-secondary border-border bg-ink/3 hover:bg-ink/8'
                                 }`}
                               >
                                 {opt.icon}
@@ -544,7 +544,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                                     className={`relative w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-200 ${
                                       isRecording
                                         ? 'bg-red-500 border-red-400/40 text-white shadow-lg shadow-red-500/25'
-                                        : 'bg-white/5 border-border text-text-secondary hover:bg-white/10 hover:text-text-primary'
+                                        : 'bg-ink/5 border-border text-text-secondary hover:bg-ink/10 hover:text-text-primary'
                                     }`}
                                   >
                                     {isRecording ? <MicOff size={13} /> : <Mic size={13} />}
@@ -560,7 +560,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                           </div>
 
                           {recentTask && !recentTaskLoading && ['pending', 'in_progress'].includes(recentTask.status) && (
-                            <div className="rounded-2xl border border-border/60 bg-white/5 p-4 space-y-3">
+                            <div className="rounded-2xl border border-border/60 bg-ink/5 p-4 space-y-3">
                               <div className="flex items-start justify-between gap-3">
                                 <div>
                                   <p className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
@@ -579,7 +579,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleMarkRecentTaskComplete}
-                                  className="btn-ghost flex-1 py-2 text-sm border border-border hover:bg-white/5"
+                                  className="btn-ghost flex-1 py-2 text-sm border border-border hover:bg-ink/5"
                                   disabled={isMarkingComplete}
                                 >
                                   {isMarkingComplete ? 'Completing…' : 'Mark Complete'}
@@ -597,7 +597,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                           {/* Recording status row */}
                           <div className="flex items-center gap-2 min-h-[18px]">
                             {isRecording && (
-                              <span className="flex items-center gap-1.5 text-[11px] text-red-400 font-semibold animate-pulse">
+                              <span className="flex items-center gap-1.5 text-[11px] text-red-600 dark:text-red-400 font-semibold animate-pulse">
                                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
                                 Listening…
                               </span>
@@ -684,7 +684,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                               resetTranscript()
                               setTaskMode('voice')
                             }}
-                            className="flex flex-col items-center gap-2 py-5 px-3 rounded-xl border border-border bg-white/3 hover:bg-accent/10 hover:border-accent/40 text-text-secondary hover:text-accent transition-all group"
+                            className="flex flex-col items-center gap-2 py-5 px-3 rounded-xl border border-border bg-ink/3 hover:bg-accent/10 hover:border-accent/40 text-text-secondary hover:text-accent transition-all group"
                           >
                             <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-all">
                               <Mic size={20} />
@@ -696,7 +696,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                           </button>
                           <button
                             onClick={() => setTaskMode('text')}
-                            className="flex flex-col items-center gap-2 py-5 px-3 rounded-xl border border-border bg-white/3 hover:bg-purple-500/10 hover:border-purple-500/40 text-text-secondary hover:text-purple-400 transition-all group"
+                            className="flex flex-col items-center gap-2 py-5 px-3 rounded-xl border border-border bg-ink/3 hover:bg-purple-500/10 hover:border-purple-500/40 text-text-secondary hover:text-purple-400 transition-all group"
                           >
                             <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-all">
                               <PenLine size={20} />
@@ -740,7 +740,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                               if (isRecording) stopRecording()
                               setTaskMode('pick')
                             }}
-                            className="p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-white/5 transition-all"
+                            className="p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-ink/5 transition-all"
                           >
                             <ArrowLeft size={14} />
                           </button>
@@ -760,14 +760,14 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                               className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all duration-300 relative z-10 ${
                                 isRecording
                                   ? 'bg-red-500 border-red-400/50 text-white shadow-xl shadow-red-500/30'
-                                  : 'bg-white/5 border-border hover:bg-white/10 hover:border-text-secondary text-text-primary'
+                                  : 'bg-ink/5 border-border hover:bg-ink/10 hover:border-text-secondary text-text-primary'
                               }`}
                             >
                               {isRecording ? <MicOff size={24} /> : <Mic size={24} />}
                             </button>
                           </div>
                           {isRecording ? (
-                            <span className="text-[11px] font-semibold text-red-400 animate-pulse tracking-widest uppercase">
+                            <span className="text-[11px] font-semibold text-red-600 dark:text-red-400 animate-pulse tracking-widest uppercase">
                               Listening…
                             </span>
                           ) : (
@@ -831,7 +831,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setTaskMode('pick')}
-                            className="p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-white/5 transition-all"
+                            className="p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-ink/5 transition-all"
                           >
                             <ArrowLeft size={14} />
                           </button>
@@ -1004,7 +1004,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
             <button
               key={t.id}
               onClick={() => submitPendingCheckin(String(t.id))}
-              className="w-full text-left p-2 rounded hover:bg-white/5"
+              className="w-full text-left p-2 rounded hover:bg-ink/5"
             >
               <div className="flex items-center justify-between">
                 <div>

@@ -38,7 +38,7 @@ export function SnoozePopover({ onSnooze, disabled }: SnoozePopoverProps) {
       <Popover.Trigger asChild>
         <button
           disabled={disabled}
-          className="p-1.5 rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 disabled:opacity-50 transition-all flex items-center gap-1.5"
+          className="p-1.5 rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-ink/5 disabled:opacity-50 transition-all flex items-center gap-1.5"
           title="Snooze Reminder"
         >
           <Clock size={16} />
@@ -58,7 +58,7 @@ export function SnoozePopover({ onSnooze, disabled }: SnoozePopoverProps) {
               <button
                 key={opt.value}
                 onClick={() => handleSelectOption(opt.value)}
-                className="w-full text-left px-2 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-md transition-all"
+                className="w-full text-left px-2 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-ink/5 rounded-md transition-all"
               >
                 {opt.label}
               </button>

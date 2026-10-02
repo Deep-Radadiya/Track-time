@@ -80,7 +80,7 @@ export function NotificationPermission() {
         )}
         <button
           onClick={() => setShowBanner(false)}
-          className="text-text-secondary hover:text-text-primary p-1.5 rounded-md hover:bg-white/5 transition-all"
+          className="text-text-secondary hover:text-text-primary p-1.5 rounded-md hover:bg-ink/5 transition-all"
         >
           <X size={16} />
         </button>

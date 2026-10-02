@@ -6,68 +6,89 @@ import type { ReminderActivity, Task } from '@/types/api'
 interface UpdatesTableProps {
   /** Show only this task's updates. Omit to show all of today's updates. */
   taskId?: string
+  /** "YYYY-MM-DD" to show a past day. Omit for today. */
+  date?: string
+  /** Only keep updates whose text or task name contains this. */
+  search?: string
 }
 
-/** Numbered, chronological table of the updates the user wrote today. */
-export function UpdatesTable({ taskId }: UpdatesTableProps) {
-  const { data: activities = [], isLoading, error } = useActivities({ today: true, limit: 200 })
+/** Today's updates, grouped by task (one card per task, oldest first). */
+export function UpdatesTable({ taskId, date, search }: UpdatesTableProps) {
+  const { data: activities = [], isLoading, error } = useActivities(date ? { date, limit: 200 } : { today: true, limit: 200 })
   const { data: tasks = [] } = useTasks()
   const titles = new Map<string, string>(tasks.map((t: Task) => [t.id, t.title] as [string, string]))
+
+  const titleOf = (a: ReminderActivity) => (a.task_id && titles.get(a.task_id)) || a.task_title || 'Untitled'
 
   const rows = activities
     .filter((a: ReminderActivity) => a.metadata?.event === 'reminder_response')
     .filter((a: ReminderActivity) => !taskId || a.task_id === taskId)
+    .filter((a: ReminderActivity) => {
+      const q = search?.trim().toLowerCase()
+      if (!q) return true
+      const text = String(a.metadata?.raw_text ?? a.optional_notes ?? '')
+      return text.toLowerCase().includes(q) || titleOf(a).toLowerCase().includes(q)
+    })
     .sort((a: ReminderActivity, b: ReminderActivity) => +new Date(a.timestamp) - +new Date(b.timestamp))
 
-  return (
-    <section className="glass-card overflow-hidden">
-      <div className="px-4 py-3">
-        <h2 className="text-sm font-semibold text-text-primary">
-          {taskId ? 'Updates for this task today' : "Today's Updates"}
-        </h2>
-        <p className="text-xs text-text-muted mt-1">{rows.length} {rows.length === 1 ? 'update' : 'updates'}</p>
-      </div>
+  const groups = new Map<string, ReminderActivity[]>()
+  for (const a of rows) {
+    const key = a.task_id ?? titleOf(a)
+    groups.set(key, [...(groups.get(key) ?? []), a])
+  }
 
-      {isLoading ? (
-        <div className="px-4 pb-4 text-sm text-text-secondary">Loading…</div>
-      ) : error ? (
-        <div className="px-4 pb-4 text-sm text-danger">Failed to load updates.</div>
-      ) : rows.length === 0 ? (
-        <div className="px-4 pb-4 text-sm text-text-secondary">
-          No updates yet. When a reminder pops up, click it and write what you did.
+  const rowsView = (list: ReminderActivity[]) => (
+    <ul className="divide-y divide-ink/[0.06]">
+      {list.map((a, i) => (
+        <li key={a.id} className="flex gap-3 px-4 py-2.5 text-sm">
+          <span className="w-5 shrink-0 text-text-muted">{i + 1}</span>
+          <span className="w-[4.5rem] shrink-0 whitespace-nowrap font-medium text-text-primary">
+            {format(new Date(a.timestamp), 'h:mm a')}
+          </span>
+          <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-text-primary">
+            {String(a.metadata?.raw_text ?? a.optional_notes ?? '')}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+
+  if (isLoading) return <div className="glass-card px-4 py-4 text-sm text-text-secondary">Loading…</div>
+  if (error) return <div className="glass-card px-4 py-4 text-sm text-danger">Failed to load updates.</div>
+  if (rows.length === 0) {
+    return (
+      <div className="glass-card px-4 py-4 text-sm text-text-secondary">
+        {search || date ? 'No updates found for this day.' : 'No updates yet. When a reminder pops up, click it and write what you did.'}
+      </div>
+    )
+  }
+
+  // One task only (the single-reminder page): a plain list.
+  if (taskId) {
+    return (
+      <section className="glass-card overflow-hidden">
+        <div className="px-4 py-3">
+          <h2 className="text-sm font-semibold text-text-primary">Updates for this task today</h2>
+          <p className="text-xs text-text-muted mt-1">{rows.length} {rows.length === 1 ? 'update' : 'updates'}</p>
         </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-t border-white/[0.06]">
-                <th className="px-4 py-2 w-10">#</th>
-                <th className="px-4 py-2 w-28 whitespace-nowrap">Time</th>
-                {!taskId && <th className="px-4 py-2 w-48">Task</th>}
-                <th className="px-4 py-2">Update</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((a: ReminderActivity, i: number) => (
-                <tr key={a.id} className="border-t border-white/[0.06] align-top">
-                  <td className="px-4 py-2 text-text-muted">{i + 1}</td>
-                  <td className="px-4 py-2 whitespace-nowrap font-medium text-text-primary">
-                    {format(new Date(a.timestamp), 'h:mm a')}
-                  </td>
-                  {!taskId && (
-                    <td className="px-4 py-2 text-text-secondary">
-                      {(a.task_id && titles.get(a.task_id)) || a.task_title}
-                    </td>
-                  )}
-                  <td className="px-4 py-2 text-text-primary whitespace-pre-wrap break-words">
-                    {String(a.metadata?.raw_text ?? a.optional_notes ?? '')}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+        <div className="border-t border-ink/[0.06]">{rowsView(rows)}</div>
+      </section>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {[...groups.entries()].map(([key, list]) => (
+        <section key={key} className="glass-card overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-primary/5">
+            <h2 className="text-sm font-semibold text-text-primary truncate">{titleOf(list[0])}</h2>
+            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+              {list.length} {list.length === 1 ? 'update' : 'updates'}
+            </span>
+          </div>
+          {rowsView(list)}
+        </section>
+      ))}
+    </div>
   )
 }

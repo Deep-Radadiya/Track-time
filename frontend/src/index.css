@@ -2,85 +2,139 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Themes: colours are RGB triplets so Tailwind can add opacity (bg-primary/10). */
 @layer base {
+  :root {
+    --bg: 243 245 251;
+    --surface: 255 255 255;
+    --elevated: 241 244 250;
+    --border: 226 232 240;
+    --primary: 79 70 229;
+    --primary-dark: 67 56 202;
+    --accent: 8 145 178;
+    --success: 5 150 105;
+    --warning: 217 119 6;
+    --danger: 220 38 38;
+    --ink: 15 23 42;
+    --text-primary: 15 23 42;
+    --text-secondary: 71 85 105;
+    --text-muted: 100 116 139;
+    --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.05);
+    --page-glow-1: rgb(99 102 241 / 0.10);
+    --page-glow-2: rgb(14 165 233 / 0.08);
+  }
+
+  [data-theme='dark'] {
+    --bg: 11 13 22;
+    --surface: 21 24 38;
+    --elevated: 30 34 52;
+    --border: 44 49 72;
+    --primary: 129 140 248;
+    --primary-dark: 99 102 241;
+    --accent: 34 211 238;
+    --success: 52 211 153;
+    --warning: 251 191 36;
+    --danger: 248 113 113;
+    --ink: 255 255 255;
+    --text-primary: 241 245 249;
+    --text-secondary: 168 178 196;
+    --text-muted: 122 134 158;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+    --page-glow-1: rgb(99 102 241 / 0.16);
+    --page-glow-2: rgb(34 211 238 / 0.08);
+  }
+
   * {
     box-sizing: border-box;
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light;
     scroll-behavior: smooth;
+  }
+  html[data-theme='dark'] {
+    color-scheme: dark;
   }
 
   body {
-    background-color: #0a0a0f;
-    color: #f1f5f9;
+    background-color: rgb(var(--bg));
+    background-image:
+      radial-gradient(600px 400px at 0% 0%, var(--page-glow-1), transparent 70%),
+      radial-gradient(500px 400px at 100% 100%, var(--page-glow-2), transparent 70%);
+    background-attachment: fixed;
+    color: rgb(var(--text-primary));
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100dvh;
+    transition: background-color 0.25s, color 0.25s;
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #111118;
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #2a2a3a;
-    border-radius: 3px;
+    background: rgb(var(--ink) / 0.18);
+    border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3a3a4a;
+    background: rgb(var(--ink) / 0.3);
   }
 
   ::selection {
-    background: rgba(99, 102, 241, 0.3);
-    color: #f1f5f9;
+    background: rgb(var(--primary) / 0.25);
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-xl;
+    @apply bg-bg-surface border border-border rounded-2xl;
+    box-shadow: var(--shadow-card);
   }
 
   .glass-card-elevated {
-    @apply bg-white/[0.05] backdrop-blur-md border border-white/[0.12] rounded-xl;
+    @apply bg-bg-surface border border-border rounded-2xl;
+    box-shadow: var(--shadow-card), 0 12px 32px rgb(var(--primary) / 0.08);
   }
 
   .btn-primary {
-    @apply bg-primary hover:bg-primary-dark text-white font-medium px-4 py-2 rounded-lg
-           transition-all duration-200 active:scale-[0.97] shadow-glow-sm hover:shadow-glow
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+    @apply text-white font-semibold px-4 py-2.5 rounded-xl min-h-[44px]
+           transition-all duration-200 active:scale-[0.97] hover:-translate-y-px hover:brightness-110
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:translate-y-0;
+    background-image: linear-gradient(135deg, #4f46e5, #7c3aed);
+    box-shadow: 0 6px 18px rgb(79 70 229 / 0.35);
   }
 
   .btn-ghost {
-    @apply text-text-secondary hover:text-text-primary hover:bg-white/5 px-4 py-2 rounded-lg
+    @apply text-text-secondary hover:text-text-primary hover:bg-ink/5 px-4 py-2 rounded-xl
            transition-all duration-200 active:scale-[0.97]
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-danger {
     @apply bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 px-4 py-2
-           rounded-lg transition-all duration-200 active:scale-[0.97];
+           rounded-xl transition-all duration-200 active:scale-[0.97];
   }
 
   .input-field {
-    @apply w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-text-primary
-           placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50
+    @apply w-full bg-bg-surface border border-border rounded-xl px-3.5 py-2.5 text-text-primary
+           placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-primary/15
            focus:border-primary transition-all duration-200;
   }
 
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary
-           hover:text-text-primary hover:bg-white/5 transition-all duration-200 cursor-pointer;
+    @apply flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-text-secondary
+           hover:text-text-primary hover:bg-ink/5 transition-all duration-200 cursor-pointer;
   }
 
   .nav-item-active {
-    @apply bg-primary/10 text-primary border border-primary/20;
+    @apply text-white hover:text-white;
+    background-image: linear-gradient(135deg, #4f46e5, #7c3aed);
+    box-shadow: 0 6px 16px rgb(79 70 229 / 0.3);
   }
 
   .status-dot {
@@ -90,14 +144,19 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #4f46e5, #7c3aed 60%, #db2777);
+  }
+
+  .brand-gradient {
+    background-image: linear-gradient(135deg, #4f46e5, #7c3aed);
   }
 
   .border-gradient {
-    background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(34,211,238,0.15));
+    background: linear-gradient(135deg, rgb(var(--primary) / 0.3), rgb(var(--accent) / 0.15));
   }
 
   .glow-ring {
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 0 1px rgb(var(--primary) / 0.3), 0 4px 14px rgb(var(--primary) / 0.12);
   }
 }

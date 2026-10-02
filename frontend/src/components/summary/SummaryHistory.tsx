@@ -18,8 +18,8 @@ function PastSummaryRow({ s }: { s: DailySummaryOut }) {
     <div className="relative flex">
       {/* Left dot + connector */}
       <div className="flex flex-col items-center mr-3 pt-1">
-        <div className="w-2.5 h-2.5 rounded-full bg-white/20 mt-1 shrink-0" />
-        <div className="w-px flex-1 bg-white/[0.06] mt-2" />
+        <div className="w-2.5 h-2.5 rounded-full bg-ink/20 mt-1 shrink-0" />
+        <div className="w-px flex-1 bg-ink/[0.06] mt-2" />
       </div>
 
       {/* Card */}
@@ -27,7 +27,7 @@ function PastSummaryRow({ s }: { s: DailySummaryOut }) {
         {/* Collapsed header — always visible */}
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-full bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.07] rounded-2xl px-5 py-3.5 flex items-center justify-between transition-colors duration-150"
+          className="w-full bg-ink/[0.04] hover:bg-ink/[0.07] border border-ink/[0.07] rounded-2xl px-5 py-3.5 flex items-center justify-between transition-colors duration-150"
         >
           <span className="text-sm font-semibold text-text-primary">{dateLabel}</span>
           <ChevronDown
@@ -38,7 +38,7 @@ function PastSummaryRow({ s }: { s: DailySummaryOut }) {
 
         {/* Expanded content */}
         {open && (
-          <div className="bg-[#111214] border border-t-0 border-white/[0.07] rounded-b-2xl -mt-2 pt-5 pb-4 px-5 space-y-3">
+          <div className="bg-bg-surface border border-t-0 border-ink/[0.07] rounded-b-2xl -mt-2 pt-5 pb-4 px-5 space-y-3">
             {/* Time */}
             <p className="text-xs text-text-muted">{timeLabel}</p>
 
@@ -111,9 +111,9 @@ export function SummaryHistory() {
         {[...Array(2)].map((_, i) => (
           <div key={i} className="flex">
             <div className="flex flex-col items-center mr-3 pt-1">
-              <div className="w-2.5 h-2.5 rounded-full bg-white/10 mt-1" />
+              <div className="w-2.5 h-2.5 rounded-full bg-ink/10 mt-1" />
             </div>
-            <div className="flex-1 h-12 rounded-2xl bg-white/[0.04] animate-pulse mb-3" />
+            <div className="flex-1 h-12 rounded-2xl bg-ink/[0.04] animate-pulse mb-3" />
           </div>
         ))}
       </div>

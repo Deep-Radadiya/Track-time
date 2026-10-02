@@ -35,7 +35,7 @@ const INTENT_CONFIG: Partial<Record<
   },
   status_update: {
     label: 'Status Update',
-    color: 'text-text-secondary border-border bg-white/5',
+    color: 'text-text-secondary border-border bg-ink/5',
     icon: <Activity size={12} />,
   },
 }
@@ -65,7 +65,7 @@ function ActivityResultCard({ result, onClose }: { result: ReminderActivity; onC
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all"
+          className="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-ink/5 transition-all"
         >
           <X size={14} />
         </button>
@@ -243,7 +243,7 @@ export function ReminderResponsePanel({ taskId, onClose }: ReminderResponsePanel
                     className={`relative w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
                       isRecording
                         ? 'bg-danger border-danger/40 text-white shadow-lg shadow-danger/20'
-                        : 'bg-white/5 border-border text-text-secondary hover:bg-white/10 hover:border-text-secondary hover:text-text-primary'
+                        : 'bg-ink/5 border-border text-text-secondary hover:bg-ink/10 hover:border-text-secondary hover:text-text-primary'
                     }`}
                   >
                     {isRecording ? <MicOff size={15} /> : <Mic size={15} />}

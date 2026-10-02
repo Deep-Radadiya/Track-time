@@ -92,20 +92,20 @@ export function TaskCreateModal({ open, onClose }: TaskCreateModalProps) {
     (form.lunchOn ? `, paused for lunch ${fmt(form.lunchStart)} – ${fmt(form.lunchEnd)}.` : '.')
 
   const chip = (active: boolean) =>
-    `px-3 py-1.5 rounded-lg text-sm border transition-all ${
+    `px-3.5 py-2 rounded-xl text-sm border transition-all ${
       active
         ? 'bg-primary/20 border-primary text-primary font-semibold'
-        : 'border-border text-text-secondary hover:bg-white/5'
+        : 'border-border text-text-secondary hover:bg-ink/5'
     }`
 
   return (
     <Dialog.Root open={open} onOpenChange={(o: boolean) => { if (!o) close() }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-elevated border border-border p-6 shadow-2xl animate-fade-in focus:outline-none max-h-[90vh] overflow-y-auto">
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-fade-in" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-surface border border-border p-4 sm:p-6 shadow-2xl animate-fade-in focus:outline-none max-h-[88dvh] overflow-y-auto overscroll-contain">
           <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
             <Dialog.Title className="text-lg font-bold text-text-primary">Create Reminder</Dialog.Title>
-            <Dialog.Close className="text-text-secondary hover:text-text-primary p-1 rounded-md hover:bg-white/5 transition-all">
+            <Dialog.Close className="text-text-secondary hover:text-text-primary p-1 rounded-md hover:bg-ink/5 transition-all">
               <X size={18} />
             </Dialog.Close>
           </div>
@@ -129,20 +129,20 @@ export function TaskCreateModal({ open, onClose }: TaskCreateModalProps) {
 
             <div>
               <StepLabel n={2}>When should reminders run each day?</StepLabel>
-              <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4 mb-3">
                 <div>
                   <span className="block text-xs text-text-muted mb-1">From</span>
                   <input type="time" value={form.start} onChange={(e) => set('start', e.target.value)}
-                    className="input-field [color-scheme:dark]" disabled={busy} />
+                    className="input-field " disabled={busy} />
                 </div>
                 <div>
                   <span className="block text-xs text-text-muted mb-1">To</span>
                   <input type="time" value={form.end} onChange={(e) => set('end', e.target.value)}
-                    className="input-field [color-scheme:dark]" disabled={busy} />
+                    className="input-field " disabled={busy} />
                 </div>
               </div>
               <span className="block text-xs text-text-muted mb-1">Remind me every</span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {INTERVALS.map((i) => (
                   <button key={i.value} type="button" disabled={busy}
                     onClick={() => setForm((f) => ({ ...f, interval: i.value, customInterval: false }))}
@@ -192,16 +192,16 @@ export function TaskCreateModal({ open, onClose }: TaskCreateModalProps) {
                 Don&apos;t remind me during lunch
               </label>
               {form.lunchOn && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <span className="block text-xs text-text-muted mb-1">Lunch starts</span>
                     <input type="time" value={form.lunchStart} onChange={(e) => set('lunchStart', e.target.value)}
-                      className="input-field [color-scheme:dark]" disabled={busy} />
+                      className="input-field " disabled={busy} />
                   </div>
                   <div>
                     <span className="block text-xs text-text-muted mb-1">Lunch ends</span>
                     <input type="time" value={form.lunchEnd} onChange={(e) => set('lunchEnd', e.target.value)}
-                      className="input-field [color-scheme:dark]" disabled={busy} />
+                      className="input-field " disabled={busy} />
                   </div>
                 </div>
               )}
@@ -212,7 +212,7 @@ export function TaskCreateModal({ open, onClose }: TaskCreateModalProps) {
             </p>
             {error && <p className="text-sm text-danger">{error}</p>}
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-border/30">
+            <div className="flex justify-end gap-3 pt-3 border-t border-border/30 sticky -bottom-4 sm:-bottom-6 bg-bg-surface -mb-4 sm:-mb-6 pb-4 sm:pb-6">
               <button type="button" onClick={close} className="btn-ghost" disabled={busy}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={busy}>
                 {busy ? 'Creating...' : 'Create'}

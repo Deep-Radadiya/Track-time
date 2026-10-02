@@ -96,11 +96,11 @@ export function TaskEditModal({ open, onClose, task }: TaskEditModalProps) {
   return (
     <Dialog.Root open={open} onOpenChange={(o: boolean) => { if (!o) onClose() }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-elevated border border-border p-6 shadow-2xl animate-fade-in focus:outline-none max-h-[90vh] overflow-y-auto">
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-fade-in" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-surface border border-border p-4 sm:p-6 shadow-2xl animate-fade-in focus:outline-none max-h-[88dvh] overflow-y-auto overscroll-contain">
           <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
             <Dialog.Title className="text-lg font-bold text-text-primary">Edit Reminder</Dialog.Title>
-            <Dialog.Close className="text-text-secondary hover:text-text-primary p-1 rounded-md hover:bg-white/5 transition-all">
+            <Dialog.Close className="text-text-secondary hover:text-text-primary p-1 rounded-md hover:bg-ink/5 transition-all">
               <X size={18} />
             </Dialog.Close>
           </div>
@@ -119,7 +119,7 @@ export function TaskEditModal({ open, onClose, task }: TaskEditModalProps) {
               {errors.title && <p className="text-xs text-danger mt-1">{errors.title.message}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
                   Due At
@@ -127,7 +127,7 @@ export function TaskEditModal({ open, onClose, task }: TaskEditModalProps) {
                 <input
                   type="datetime-local"
                   {...register('due_at')}
-                  className="input-field [color-scheme:dark]"
+                  className="input-field "
                   disabled={updateMutation.isPending}
                 />
               </div>
@@ -145,7 +145,7 @@ export function TaskEditModal({ open, onClose, task }: TaskEditModalProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
                   Recurrence
@@ -192,7 +192,7 @@ export function TaskEditModal({ open, onClose, task }: TaskEditModalProps) {
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-border/30">
+            <div className="flex justify-end gap-3 pt-3 border-t border-border/30 sticky -bottom-4 sm:-bottom-6 bg-bg-surface -mb-4 sm:-mb-6 pb-4 sm:pb-6">
               <button
                 type="button"
                 onClick={onClose}

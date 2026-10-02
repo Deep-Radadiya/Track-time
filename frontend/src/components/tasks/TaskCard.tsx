@@ -50,7 +50,7 @@ export function TaskCard({ task }: TaskCardProps) {
       layout
       className={`glass-card p-4 flex flex-col justify-between gap-3 transition-all duration-200 border-l-4 ${
         isInProgress
-          ? 'border-l-accent shadow-glow-accent/10'
+          ? 'border-l-accent'
           : isBlocked
           ? 'border-l-danger'
           : isDone
@@ -80,7 +80,7 @@ export function TaskCard({ task }: TaskCardProps) {
           <div className="flex items-center gap-3 flex-wrap text-xs text-text-secondary pt-0.5">
             <StatusBadge status={task.status} />
             {task.category && (
-              <span className="bg-white/5 border border-border rounded px-1.5 py-0.5 text-text-secondary uppercase tracking-wider text-[10px] font-bold">
+              <span className="bg-ink/5 border border-border rounded px-1.5 py-0.5 text-text-secondary uppercase tracking-wider text-[10px] font-bold">
                 {task.category}
               </span>
             )}
@@ -96,14 +96,14 @@ export function TaskCard({ task }: TaskCardProps) {
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={() => setIsEditOpen(true)}
-            className="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all"
+            className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-ink/5 transition-all"
             title="Edit Task"
           >
             <Edit2 size={16} />
           </button>
           <button
             onClick={handleDelete}
-            className="p-1 rounded-md text-text-secondary hover:text-danger hover:bg-danger/10 transition-all"
+            className="p-2 rounded-lg text-text-secondary hover:text-danger hover:bg-danger/10 transition-all"
             title="Delete Task"
             disabled={deleteMutation.isPending}
           >
@@ -161,7 +161,7 @@ export function TaskCard({ task }: TaskCardProps) {
         {!isDone && (task.status === 'pending' || isBlocked) && (
           <button
             onClick={() => handleAction('start')}
-            className="btn-ghost py-1 px-3 text-xs bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent flex items-center gap-1"
+            className="btn-ghost py-2 px-3.5 text-xs font-semibold bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent flex items-center gap-1"
             disabled={actionMutation.isPending}
           >
             <Play size={12} fill="currentColor" /> Start
@@ -171,7 +171,7 @@ export function TaskCard({ task }: TaskCardProps) {
         {!isDone && (
           <button
             onClick={() => handleAction('done')}
-            className="btn-ghost py-1 px-3 text-xs bg-success/10 border border-success/20 hover:bg-success/20 text-success flex items-center gap-1"
+            className="btn-ghost py-2 px-3.5 text-xs font-semibold bg-success/10 border border-success/20 hover:bg-success/20 text-success flex items-center gap-1"
             disabled={actionMutation.isPending}
           >
             <Check size={12} strokeWidth={3} /> Complete
@@ -188,7 +188,7 @@ export function TaskCard({ task }: TaskCardProps) {
         {!isDone && !isBlocked && (
           <button
             onClick={() => handleAction('block')}
-            className="btn-ghost py-1.5 px-3 text-xs bg-danger/5 border border-danger/10 text-danger/80 hover:bg-danger/10 hover:text-danger flex items-center gap-1.5"
+            className="btn-ghost py-2 px-3.5 text-xs font-semibold bg-danger/5 border border-danger/10 text-danger/80 hover:bg-danger/10 hover:text-danger flex items-center gap-1.5"
             disabled={actionMutation.isPending}
           >
             <AlertTriangle size={12} /> Block
@@ -198,7 +198,7 @@ export function TaskCard({ task }: TaskCardProps) {
         {(isDone || task.status === 'snoozed') && (
           <button
             onClick={() => handleAction('reopen')}
-            className="btn-ghost py-1 px-3 text-xs bg-primary/10 border border-primary/20 hover:bg-primary/20 text-primary flex items-center gap-1"
+            className="btn-ghost py-2 px-3.5 text-xs font-semibold bg-primary/10 border border-primary/20 hover:bg-primary/20 text-primary flex items-center gap-1"
             disabled={actionMutation.isPending}
           >
             <RefreshCw size={12} /> Reopen
@@ -208,7 +208,7 @@ export function TaskCard({ task }: TaskCardProps) {
         {/* Respond: opens the update page for this task */}
         <button
           onClick={() => navigate(`/update/${task.id}`)}
-          className="ml-auto btn-ghost py-1 px-3 text-xs flex items-center gap-1 transition-all text-text-secondary hover:text-text-primary"
+          className="ml-auto btn-ghost py-2 px-3.5 text-xs font-semibold flex items-center gap-1 transition-all text-text-secondary hover:text-text-primary"
           title="Write an update for this reminder"
         >
           <MessageSquare size={12} />

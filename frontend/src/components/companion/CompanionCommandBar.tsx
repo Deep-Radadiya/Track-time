@@ -109,7 +109,7 @@ export function CompanionCommandBar() {
               className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${
                 isRecording 
                   ? 'text-danger bg-danger/10 hover:bg-danger/20 animate-pulse' 
-                  : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-ink/5'
               }`}
             >
               {isRecording ? <MicOff size={18} /> : <Mic size={18} />}

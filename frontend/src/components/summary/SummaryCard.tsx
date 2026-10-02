@@ -16,15 +16,15 @@ export function SummaryCard({ date, time, subtitle, summary, isActive }: Summary
       <div className="flex flex-col items-center mr-3 pt-1">
         <div
           className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${
-            isActive ? 'bg-success shadow-[0_0_6px_2px_rgba(34,197,94,0.4)]' : 'bg-white/20'
+            isActive ? 'bg-success shadow-[0_0_6px_2px_rgba(34,197,94,0.4)]' : 'bg-ink/20'
           }`}
         />
         {/* Connector line */}
-        <div className="w-px flex-1 bg-white/[0.06] mt-2" />
+        <div className="w-px flex-1 bg-ink/[0.06] mt-2" />
       </div>
 
       {/* Card */}
-      <div className="flex-1 bg-[#111214] border border-white/[0.07] rounded-2xl px-5 py-4 space-y-3 mb-3">
+      <div className="flex-1 bg-bg-surface border border-ink/[0.07] rounded-2xl px-5 py-4 space-y-3 mb-3">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-sm font-bold text-text-primary leading-tight">{date}</h3>

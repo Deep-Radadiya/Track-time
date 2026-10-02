@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useNavigate, Link } from 'react-router-dom'
 import { parseApiError, TIMEZONES } from '@/lib/utils'
 import toast from 'react-hot-toast'
-import { Loader2, Mail, Lock, Globe } from 'lucide-react'
+import { Bell, Loader2, Mail, Lock, Globe } from 'lucide-react'
 import { idbClearToken } from '@/stores/authStore'
 
 const signupSchema = zod.object({
@@ -62,9 +62,12 @@ export function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-md p-8 glass-card space-y-6">
+    <div className="w-full max-w-md p-6 sm:p-8 glass-card-elevated space-y-6 relative">
+      <div className="mx-auto w-14 h-14 rounded-2xl brand-gradient flex items-center justify-center shadow-glow">
+        <Bell size={26} className="text-white" />
+      </div>
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-text-primary">Create Account</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">Create Account</h1>
         <p className="text-sm text-text-secondary mt-2">Get started with intelligent notifications</p>
       </div>
 

@@ -66,20 +66,20 @@ export function SummaryDrawer({ initialSummary }: SummaryDrawerProps = {}) {
       {generating && (
         <div className="flex">
           <div className="flex flex-col items-center mr-3 pt-1">
-            <div className="w-2.5 h-2.5 rounded-full bg-white/20 mt-1 animate-pulse" />
-            <div className="w-px flex-1 bg-white/[0.06] mt-2" />
+            <div className="w-2.5 h-2.5 rounded-full bg-ink/20 mt-1 animate-pulse" />
+            <div className="w-px flex-1 bg-ink/[0.06] mt-2" />
           </div>
-          <div className="flex-1 bg-[#111214] border border-white/[0.07] rounded-2xl px-5 py-4 space-y-3 mb-3 animate-pulse">
+          <div className="flex-1 bg-bg-surface border border-ink/[0.07] rounded-2xl px-5 py-4 space-y-3 mb-3 animate-pulse">
             <div className="flex justify-between">
-              <div className="h-4 bg-white/10 rounded w-36" />
-              <div className="h-3 bg-white/5 rounded w-16" />
+              <div className="h-4 bg-ink/10 rounded w-36" />
+              <div className="h-3 bg-ink/5 rounded w-16" />
             </div>
-            <div className="h-3 bg-white/5 rounded w-64" />
+            <div className="h-3 bg-ink/5 rounded w-64" />
             <div className="space-y-2 pt-1">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="flex items-center gap-2.5">
-                  <div className="w-3.5 h-3.5 rounded-full bg-white/10 shrink-0" />
-                  <div className="h-3 bg-white/5 rounded w-4/5" />
+                  <div className="w-3.5 h-3.5 rounded-full bg-ink/10 shrink-0" />
+                  <div className="h-3 bg-ink/5 rounded w-4/5" />
                 </div>
               ))}
             </div>
@@ -91,7 +91,7 @@ export function SummaryDrawer({ initialSummary }: SummaryDrawerProps = {}) {
       {!generating && !summary && (
         <div className="flex">
           <div className="flex flex-col items-center mr-3 pt-1">
-            <div className="w-2.5 h-2.5 rounded-full bg-white/10 mt-1" />
+            <div className="w-2.5 h-2.5 rounded-full bg-ink/10 mt-1" />
           </div>
           <div className="flex-1 border border-dashed border-border/50 rounded-2xl p-8 flex flex-col items-center justify-center space-y-3 text-center mb-3">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">

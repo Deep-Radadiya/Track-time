@@ -7,6 +7,7 @@ import TasksPage from '@/pages/TasksPage'
 import VoicePage from '@/pages/VoicePage'
 import SummaryPage from '@/pages/SummaryPage'
 import SettingsPage from '@/pages/SettingsPage'
+import UpdatesPage from '@/pages/UpdatesPage'
 import TaskUpdatePage from '@/pages/TaskUpdatePage'
 import { useAuthStore } from '@/stores/authStore'
 import { useTokenRefresh } from '@/hooks/useTokenRefresh'
@@ -65,6 +66,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <VoicePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/updates"
+        element={
+          <ProtectedRoute>
+            <UpdatesPage />
           </ProtectedRoute>
         }
       />
