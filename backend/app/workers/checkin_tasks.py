@@ -5,7 +5,6 @@ import uuid
 from sqlalchemy import select
 
 from app.database import SyncSessionLocal
-from app.workers.celery_app import celery_app
 from app.models.user import User
 from app.models.notification_log import Device
 from app.services.push_service import send_push, GoneException
@@ -15,7 +14,6 @@ from app.services.companion import checkin_service
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task
 def run_hourly_checkins():
     """
     Runs every 5 minutes. Finds users whose local time is within their configured
@@ -76,7 +74,6 @@ def run_hourly_checkins():
                     except Exception:
                         logger.exception("[Beat] _send_checkin_reminder failed for user %s", user.id)
                     triggered += 1
-@celery_app.task
 def send_delayed_checkin_reminder(user_id_str: str):
     """
     Sends a checkin reminder after a delay (e.g., 'Remind me later').

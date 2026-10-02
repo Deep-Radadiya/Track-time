@@ -1,13 +1,13 @@
 # Smart Reminder / Task Management Backend
 
-FastAPI + Postgres + Celery backend for a voice-aware, multi-device reminder
+FastAPI + Postgres backend for a voice-aware, multi-device reminder
 app. Backend only (per spec) — no frontend included.
 
 ## Stack
 FastAPI (async) · PostgreSQL via async SQLAlchemy 2.0 + asyncpg · Alembic ·
-JWT auth (python-jose + passlib) · Celery + Celery beat on Redis ·
+JWT auth (python-jose + passlib) · APScheduler (runs inside the API process) ·
 Groq API (voice parsing + day-end summaries) · pywebpush ·
-docker-compose for local dev.
+`./run.sh` starts everything (needs only Postgres).
 
 ## Quick start
 
@@ -39,7 +39,7 @@ app/
                           auth_service, task_service (state machine),
                           claude_service (LLM calls + validation),
                           push_service, device_service
-  workers/             celery_app.py, reminder_tasks.py, summary_tasks.py
+  workers/             reminder_tasks.py, checkin_tasks.py, summary_tasks.py (jobs run by scheduler.py)
   websocket/           connection_manager.py + the /ws route
   core/                security.py (JWT/password hashing), deps.py (auth dep)
 alembic/               migrations (one hand-written initial migration included)
@@ -49,11 +49,11 @@ fixtures/              voice_transcripts.json — transcript -> expected JSON
 
 ## Design decisions (so you can defend them)
 
-**Why scheduling is server-driven (Celery beat), not client timers.**
+**Why scheduling is server-driven (a scheduler in the API), not client timers.**
 A `setTimeout`/JS-interval-based reminder dies the instant a tab closes, a
 phone goes to sleep, or the OS kills the background app — exactly the
-moments a reminder app most needs to still work. Celery beat runs as an
-independent process on the server, completely decoupled from whether any
+moments a reminder app most needs to still work. The scheduler runs on the
+server, completely decoupled from whether any
 client is even open, so "what's due right now" has one single source of
 truth and one clock. It also sidesteps per-device clock skew: the server
 decides what's due, not whichever phone happens to be awake.

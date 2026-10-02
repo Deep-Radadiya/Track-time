@@ -3,14 +3,14 @@
 SmartReminder is a full-stack reminder and productivity check-in app.
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS
-- Backend: FastAPI, PostgreSQL, Redis, Celery, Alembic
+- Backend: FastAPI, PostgreSQL, Alembic (one process: the API also runs the reminder scheduler)
 - Notifications: Web Push with VAPID keys
 - AI: Groq-backed voice parsing and productivity companion features
 
 ## Project Structure
 
 ```text
-backend/   FastAPI API, Celery workers, database models, migrations
+backend/   FastAPI API + reminder scheduler, database models, migrations
 frontend/  React app and service worker
 ```
 
@@ -20,9 +20,6 @@ Create `backend/.env` from `backend/.env.example` and set production values:
 
 ```env
 DATABASE_URL=postgresql+asyncpg://...
-REDIS_URL=redis://...
-CELERY_BROKER_URL=redis://...
-CELERY_RESULT_BACKEND=redis://...
 JWT_SECRET_KEY=change-this-to-a-long-random-secret
 GROQ_API_KEY=your-groq-api-key
 VAPID_PUBLIC_KEY=your-vapid-public-key
@@ -43,11 +40,12 @@ VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
 
 Backend:
 
-```powershell
+```bash
 cd backend
-docker compose up --build
-docker compose exec backend alembic upgrade head
+./run.sh        # applies migrations and starts the API + scheduler on :8000
 ```
+
+Only Postgres has to be running. There is no Redis, worker or beat to start.
 
 Frontend:
 
@@ -79,6 +77,6 @@ $env:GROQ_API_KEY='dev-only'
 
 ## GitHub Deployment Notes
 
-Do not commit `.env`, `.env.local`, `node_modules`, `dist`, virtualenvs, Celery beat files, or local notes. The root `.gitignore` is configured for those.
+Do not commit `.env`, `.env.local`, `node_modules`, `dist`, virtualenvs, logs, or local notes. The root `.gitignore` is configured for those.
 
 Before deploying, rotate any secrets that were used locally and configure them in your hosting provider's environment variable settings.

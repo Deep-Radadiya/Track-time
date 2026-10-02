@@ -1,12 +1,11 @@
 """
-Day-end summary Celery task.
+Day-end summary job.
 
 After generating the AI summary for a user:
 1. Sends a Web Push notification to every push-enabled device with the full
    summary embedded in the payload (so the OS notification body is meaningful).
-2. Publishes a Redis pub/sub message on channel ``summary:{user_id}`` so that
-   any open WebSocket connections receive the summary in real time without the
-   user having to tap the notification.
+2. Sends the summary to any open WebSocket connections in real time, without
+   the user having to tap the notification.
 """
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -22,7 +21,6 @@ from sqlalchemy.dialects.postgresql import insert
 from app.models import User, Task, TaskStatus, TaskSource, Device
 from app.models.companion import DailySummary
 from app.services import push_service, summary_service
-from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -50,32 +48,21 @@ async def build_daily_stats(db: AsyncSession, user_id) -> dict:
     return _task_stats(tasks)
 
 
-# Sync version — used by the Celery beat task
+# Sync version — used by the scheduler job
 def build_daily_stats_sync(db: Session, user_id) -> dict:
     tasks = db.query(Task).filter(Task.user_id == user_id).all()
     return _task_stats(tasks)
 
 
 def _publish_ws_summary(user_id: str, result: dict) -> None:
-    """Publish the summary to a Redis pub/sub channel so that any open
-    WebSocket connections pick it up and forward it to the browser tab.
-
-    Uses the synchronous redis-py client since this runs inside a Celery worker
-    (no asyncio event loop available at this point).
-    """
+    """Push the summary to the user's open browser tabs (same process as the API)."""
     try:
-        import redis as sync_redis
-        from app.config import settings
+        from uuid import UUID
+        from app.websocket.connection_manager import manager
 
-        r = sync_redis.from_url(settings.REDIS_URL, decode_responses=True)
-        message = json.dumps({
-            "event": "summary_ready",
-            "summary": result,
-        })
-        r.publish(f"summary:{user_id}", message)
-        r.close()
+        manager.broadcast_from_thread(UUID(user_id), {"event": "summary_ready", "summary": result})
     except Exception as exc:
-        logger.warning("Failed to publish summary over Redis pub/sub: %s", exc)
+        logger.warning("Failed to deliver summary over WebSocket: %s", exc)
 
 
 def _run_for_user_sync(db: Session, user: User):
@@ -128,7 +115,7 @@ def _run_for_user_sync(db: Session, user: User):
     db.commit()
     logger.info("[Push] Summary result for user %s: sent=%d removed=%d", user.id, push_sent, push_removed)
 
-    # 2. Broadcast via Redis pub/sub so open browser tabs get it instantly.
+    # 2. Deliver to open browser tabs instantly.
     _publish_ws_summary(str(user.id), result)
 
 
@@ -148,6 +135,5 @@ def _run_day_end_summaries_sync():
                 _run_for_user_sync(db, user)
 
 
-@celery_app.task(name="app.workers.summary_tasks.run_day_end_summaries")
 def run_day_end_summaries():
     _run_day_end_summaries_sync()

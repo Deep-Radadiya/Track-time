@@ -1,3 +1,8 @@
+import asyncio
+import logging
+import os
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # from app.api import auth, tasks, voice, devices, summary, companion
@@ -5,7 +10,21 @@ from app.api import auth, tasks, voice, devices, summary, companion, activities
 from app.config import settings
 from app.websocket import routes as ws_routes
 
-app = FastAPI(title="Smart Reminder")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app import scheduler
+    from app.websocket.connection_manager import manager
+
+    manager.loop = asyncio.get_running_loop()
+    if os.getenv("DISABLE_SCHEDULER") != "1":
+        scheduler.start()
+    yield
+    scheduler.stop()
+
+
+app = FastAPI(title="Smart Reminder", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

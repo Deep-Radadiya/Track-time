@@ -19,7 +19,7 @@ async def get_db():
         yield session
 
 
-# Sync engine — used by Celery tasks (asyncpg cannot run inside asyncio.run())
+# Sync engine — used by the scheduler jobs (they run in a background thread, outside the event loop)
 # Converts postgresql+asyncpg:// -> postgresql+psycopg2://
 _sync_url = settings.DATABASE_URL.replace("postgresql+asyncpg", "postgresql")
 sync_engine = create_engine(_sync_url, pool_pre_ping=True)

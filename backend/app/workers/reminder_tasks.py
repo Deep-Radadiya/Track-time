@@ -9,10 +9,9 @@ to the user's local timezone at the edges — for quiet-hours math and for
 deciding when "9pm" is for the daily summary — where local time is actually
 the meaningful unit.
 
-Why synchronous: Celery uses a prefork model. asyncpg connections are
-bound to a specific event loop, and asyncio.run() creates a new loop on
-every call, so the old connection's Future ends up attached to a different
-loop → RuntimeError. Using psycopg2 (sync) avoids this entirely.
+Why synchronous: this job runs in a background scheduler thread, outside the
+API's event loop. asyncpg connections are bound to an event loop, so the job
+uses psycopg2 (sync) instead.
 """
 from datetime import datetime, timedelta, timezone
 import logging
@@ -22,7 +21,6 @@ from sqlalchemy.orm import Session
 from app.models import Task, TaskStatus, User, Device, NotificationLog
 from app.services import push_service, task_service
 from app.services.push_service import GoneException
-from app.workers.celery_app import celery_app
 from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
@@ -168,6 +166,5 @@ def _check_due_reminders_sync():
         logger.info("[Beat] check_due_reminders — done")
 
 
-@celery_app.task(name="app.workers.reminder_tasks.check_due_reminders")
 def check_due_reminders():
     _check_due_reminders_sync()

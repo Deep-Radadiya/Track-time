@@ -1,6 +1,7 @@
 from app.models.user import User
 from app.models.task import Task, TaskNote, TaskStatus, Recurrence, TaskSource
 from app.models.notification_log import Device, NotificationLog
+from app.models.revoked_token import RevokedToken
 from app.models.activity import ReminderActivity, ActivityType, ActivitySource
 from app.models.companion import (
     ProductivityLog,

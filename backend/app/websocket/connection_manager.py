@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID
 
 from fastapi import WebSocket
@@ -9,6 +10,7 @@ class ConnectionManager:
 
     def __init__(self) -> None:
         self._connections: dict[UUID, set[WebSocket]] = {}
+        self.loop: asyncio.AbstractEventLoop | None = None  # set at app startup
 
     async def connect(self, user_id: UUID, websocket: WebSocket) -> None:
         await websocket.accept()
@@ -33,6 +35,11 @@ class ConnectionManager:
                 dead.append(ws)
         for ws in dead:
             self.disconnect(user_id, ws)
+
+    def broadcast_from_thread(self, user_id: UUID, message: dict) -> None:
+        """Called from the scheduler thread: hand the message to the API's event loop."""
+        if self.loop is not None and self._connections.get(user_id):
+            asyncio.run_coroutine_threadsafe(self.broadcast_to_user(user_id, message), self.loop)
 
 
 manager = ConnectionManager()

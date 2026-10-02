@@ -51,7 +51,7 @@ from app.schemas.companion import (
 from app.services.companion.chat_service import process_chat_message
 from app.services.companion import checkin_service
 from app.services import activity_service
-from app.workers.checkin_tasks import send_delayed_checkin_reminder
+from app.scheduler import schedule_delayed_checkin
 
 router = APIRouter(prefix="/companion", tags=["companion"])
 
@@ -355,12 +355,12 @@ async def get_checkin_history(
     "/checkin/reschedule",
     status_code=202,
     summary="Reschedule the hourly check-in",
-    description="Schedules a delayed check-in reminder via Celery.",
+    description="Schedules a delayed check-in reminder (10 minutes).",
 )
 async def reschedule_checkin(
     user: User = Depends(get_current_user),
 ) -> dict:
-    send_delayed_checkin_reminder.apply_async((str(user.id),), countdown=600)  # 10 minutes
+    schedule_delayed_checkin(str(user.id), minutes=10)
     return {"status": "rescheduled"}
 
 

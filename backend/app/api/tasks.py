@@ -148,7 +148,7 @@ async def update_task(task_id: UUID, payload: TaskUpdate, db: AsyncSession = Dep
     for field, value in update_data.items():
         setattr(task, field, value)
     # Keep next_due_at and anchor_time in sync with due_at changes so the
-    # Celery scheduler always has the correct target time.
+    # The scheduler always has the correct target time.
     if "due_at" in update_data:
         task.next_due_at = update_data["due_at"]
         task.anchor_time = update_data["due_at"]

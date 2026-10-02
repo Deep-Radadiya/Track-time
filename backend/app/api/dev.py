@@ -5,11 +5,12 @@ Only mounted when ENVIRONMENT=development (see main.py).
 
 Endpoints
 ---------
-POST /dev/trigger-checkin         → trigger run_hourly_checkins for the authed user immediately
+POST /dev/trigger-checkin         → send a check-in reminder to the authed user now
 POST /dev/trigger-reminder-check  → trigger check_due_reminders immediately
-GET  /dev/scheduler-status        → show beat schedule config + next run times
+GET  /dev/scheduler-status        → show scheduled jobs and next run times
 POST /dev/test-push               → send a test push to all of the authed user's devices
 """
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -21,7 +22,7 @@ from app.core.deps import get_current_user
 from app.database import get_db
 from app.models import User, Device
 from app.services.push_service import send_push, GoneException, build_reminder_payload
-from app.workers.celery_app import celery_app
+from app import scheduler as app_scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -30,56 +31,32 @@ router = APIRouter(prefix="/dev", tags=["dev"])
 
 @router.post("/trigger-checkin")
 async def trigger_checkin(user: User = Depends(get_current_user)):
-    """Trigger the hourly check-in task immediately for the authenticated user."""
+    """Send a check-in reminder to the authenticated user right now."""
     from app.workers.checkin_tasks import send_delayed_checkin_reminder
-    result = send_delayed_checkin_reminder.delay(str(user.id))
-    logger.info("[Dev] trigger-checkin dispatched for user %s — task_id=%s", user.id, result.id)
-    return {
-        "status": "dispatched",
-        "task_id": result.id,
-        "user_id": str(user.id),
-        "triggered_at": datetime.now(timezone.utc).isoformat(),
-    }
+    await asyncio.to_thread(send_delayed_checkin_reminder, str(user.id))
+    logger.info("[Dev] trigger-checkin ran for user %s", user.id)
+    return {"status": "done", "user_id": str(user.id), "triggered_at": datetime.now(timezone.utc).isoformat()}
 
 
 @router.post("/trigger-reminder-check")
 async def trigger_reminder_check(user: User = Depends(get_current_user)):
-    """Trigger check_due_reminders immediately (checks ALL users)."""
+    """Run check_due_reminders immediately (checks ALL users)."""
     from app.workers.reminder_tasks import check_due_reminders
-    result = check_due_reminders.delay()
-    logger.info("[Dev] trigger-reminder-check dispatched by user %s — task_id=%s", user.id, result.id)
-    return {
-        "status": "dispatched",
-        "task_id": result.id,
-        "triggered_at": datetime.now(timezone.utc).isoformat(),
-    }
+    await asyncio.to_thread(check_due_reminders)
+    logger.info("[Dev] trigger-reminder-check ran by user %s", user.id)
+    return {"status": "done", "triggered_at": datetime.now(timezone.utc).isoformat()}
 
 
 @router.get("/scheduler-status")
 async def scheduler_status(user: User = Depends(get_current_user)):
-    """Return the Celery Beat schedule configuration so devs can verify timings."""
-    schedule = {}
-    for name, entry in celery_app.conf.beat_schedule.items():
-        sched = entry.get("schedule")
-        if hasattr(sched, "run_every"):
-            # timedelta-based
-            schedule[name] = {
-                "task": entry["task"],
-                "schedule": f"every {sched.run_every.total_seconds()}s",
-            }
-        elif hasattr(sched, "minute"):
-            # crontab-based
-            schedule[name] = {
-                "task": entry["task"],
-                "schedule": f"crontab(minute={sched._orig_minute}, hour={sched._orig_hour})",
-            }
-        else:
-            schedule[name] = {"task": entry["task"], "schedule": str(sched)}
-
+    """Show the scheduled jobs and when each runs next."""
+    jobs = {
+        job.id: {"next_run_utc": job.next_run_time.isoformat() if job.next_run_time else None, "trigger": str(job.trigger)}
+        for job in app_scheduler.scheduler.get_jobs()
+    }
     return {
-        "beat_schedule": schedule,
-        "broker": celery_app.conf.broker_url,
-        "timezone": celery_app.conf.timezone,
+        "running": app_scheduler.scheduler.running,
+        "jobs": jobs,
         "server_time_utc": datetime.now(timezone.utc).isoformat(),
     }
 
