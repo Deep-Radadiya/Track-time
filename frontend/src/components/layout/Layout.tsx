@@ -108,7 +108,7 @@ export function Layout({ children }: LayoutProps) {
             <div className="w-8 h-8 rounded-xl brand-gradient flex items-center justify-center">
               <Bell size={15} className="text-white" />
             </div>
-            <span className="font-extrabold tracking-tight text-text-primary">SmartRemind</span>
+            <span className="font-extrabold tracking-tight text-text-primary">Donezo</span>
           </div>
           <div className="w-11">
             <ThemeToggle />

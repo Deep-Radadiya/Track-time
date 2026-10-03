@@ -1,6 +1,6 @@
-# SmartReminder
+# Donezo
 
-SmartReminder is a full-stack reminder and productivity check-in app.
+Donezo is a full-stack reminder and productivity check-in app.
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS
 - Backend (`server/`): Node.js, Express, MongoDB (one process: the API also runs the reminder scheduler)

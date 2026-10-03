@@ -7,4 +7,7 @@ export const activitiesApi = {
 
   submit: (data: ActivitySubmitRequest): Promise<ReminderActivity> =>
     api.post<ReminderActivity>('/activities/submit', data).then((r) => r.data),
+
+  update: (id: string, text: string): Promise<ReminderActivity> =>
+    api.patch<ReminderActivity>(`/activities/${id}`, { text }).then((r) => r.data),
 }

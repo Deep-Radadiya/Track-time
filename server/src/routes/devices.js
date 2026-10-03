@@ -56,7 +56,7 @@ router.post('/test-push', async (req, res) => {
   if (devices.length === 0) return res.json({ status: 'no_devices', devices_targeted: 0, results: [] });
 
   const payload = {
-    title: 'SmartReminder Test',
+    title: 'Donezo Test',
     body: 'Your push notifications are configured correctly!',
     type: 'test',
     tag: 'test-push',

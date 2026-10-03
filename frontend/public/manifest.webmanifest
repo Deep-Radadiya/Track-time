@@ -1,6 +1,6 @@
 {
-  "name": "Smart Reminder",
-  "short_name": "Reminder",
+  "name": "Donezo",
+  "short_name": "Donezo",
   "description": "AI-powered reminders and productivity check-ins",
   "start_url": "/",
   "scope": "/",

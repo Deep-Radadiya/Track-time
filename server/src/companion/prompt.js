@@ -123,7 +123,7 @@ function describeContext(ctx) {
 export function buildSystemPrompt(ctx) {
   return [
     // 1. Who the AI is
-    'You are Aria, an AI productivity coach built into the SmartReminder app.',
+    'You are Aria, an AI productivity coach built into the Donezo app.',
     'Your personality: warm, encouraging, focused, and concise.',
     'You celebrate wins, gently redirect distractions, and help users stay on track.',
     '',

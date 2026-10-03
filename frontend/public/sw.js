@@ -66,7 +66,7 @@ self.addEventListener('push', (event) => {
 
     if (data.type === 'test') {
       event.waitUntil(
-        self.registration.showNotification(data.title || 'SmartReminder Test 🔔', {
+        self.registration.showNotification(data.title || 'Donezo Test 🔔', {
           body: data.body || 'Push notifications are working correctly!',
           tag: data.tag || 'test-push',
           icon: '/icon-192.png',

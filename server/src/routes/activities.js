@@ -61,4 +61,18 @@ router.post('/submit', async (req, res) => {
   res.status(201).json(activity);
 });
 
+// Edit the text of an update you wrote earlier (today or any past day).
+router.patch('/:id', async (req, res) => {
+  const { text } = req.body;
+  if (typeof text !== 'string' || text.trim().length < 1 || text.length > 2000) return bad(res, 'text must be 1 to 2000 characters');
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ detail: 'Update not found' });
+
+  const activity = await Activity.findOne({ _id: req.params.id, user_id: req.user._id });
+  if (!activity || activity.metadata?.event !== 'reminder_response') return res.status(404).json({ detail: 'Update not found' });
+
+  activity.metadata = { ...activity.metadata, raw_text: text.trim(), edited_at: new Date().toISOString() };
+  await activity.save();
+  res.json(activity);
+});
+
 export default router;

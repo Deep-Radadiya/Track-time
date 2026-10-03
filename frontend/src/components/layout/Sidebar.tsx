@@ -40,7 +40,7 @@ export function Sidebar() {
         <div className="w-9 h-9 rounded-xl brand-gradient flex items-center justify-center shadow-glow-sm">
           <Bell size={17} className="text-white" />
         </div>
-        <span className="font-extrabold text-text-primary tracking-tight text-lg">SmartRemind</span>
+        <span className="font-extrabold text-text-primary tracking-tight text-lg">Donezo</span>
       </div>
 
       {/* Nav items */}

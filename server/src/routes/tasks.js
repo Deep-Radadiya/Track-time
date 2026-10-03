@@ -6,7 +6,7 @@ import { requireLogin } from '../auth.js';
 import { recordActivity } from '../activityService.js';
 import { broadcast } from '../websocket.js';
 import { sendToUser, cancelPayload } from '../push.js';
-import { nextWindowSlot, applyAction, InvalidAction, normalizeTime, toSeconds } from '../taskService.js';
+import { nextWindowSlot, rollWindowForward, applyAction, InvalidAction, normalizeTime, toSeconds } from '../taskService.js';
 
 const router = Router();
 router.use(requireLogin); // every route here needs a logged-in user
@@ -171,6 +171,8 @@ router.post('/:id/action', async (req, res) => {
   try {
     const changed = applyAction(task, action, clientTimestamp, snooze_minutes);
     if (changed) {
+      // Turning a window reminder back on: pick its next slot (block cleared it).
+      if (action === 'reopen') rollWindowForward(task, req.user, new Date());
       await task.save();
       await recordActivity({
         userId: req.user._id, task, source: 'task',

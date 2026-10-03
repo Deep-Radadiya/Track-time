@@ -416,7 +416,7 @@ export function HourlyReminderPanel({ onClose, reminderId }: HourlyReminderPanel
           className="glass-card w-full max-w-md border border-border shadow-2xl overflow-hidden"
         >
           {/* ── Gradient accent bar ── */}
-          <div className="h-0.5 w-full bg-gradient-to-r from-accent/70 via-purple-500/60 to-accent/30" />
+          <div className="h-0.5 w-full bg-gradient-to-r from-accent/70 via-primary/60 to-accent/30" />
 
           <div className="p-5 space-y-5">
             {/* ── Header ── */}

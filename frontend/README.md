@@ -1,4 +1,4 @@
-# Smart Reminder Frontend SPA
+# Donezo Frontend SPA
 
 A high-performance, premium client-side SPA built with React 18, TypeScript, and Vite.
 

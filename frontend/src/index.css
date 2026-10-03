@@ -9,9 +9,9 @@
     --surface: 255 255 255;
     --elevated: 241 244 250;
     --border: 226 232 240;
-    --primary: 79 70 229;
-    --primary-dark: 67 56 202;
-    --accent: 8 145 178;
+    --primary: 15 118 110;
+    --primary-dark: 17 94 89;
+    --accent: 37 99 235;
     --success: 5 150 105;
     --warning: 217 119 6;
     --danger: 220 38 38;
@@ -20,8 +20,8 @@
     --text-secondary: 71 85 105;
     --text-muted: 100 116 139;
     --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.05);
-    --page-glow-1: rgb(99 102 241 / 0.10);
-    --page-glow-2: rgb(14 165 233 / 0.08);
+    --page-glow-1: rgb(20 184 166 / 0.10);
+    --page-glow-2: rgb(16 185 129 / 0.07);
   }
 
   [data-theme='dark'] {
@@ -29,9 +29,9 @@
     --surface: 21 24 38;
     --elevated: 30 34 52;
     --border: 44 49 72;
-    --primary: 129 140 248;
-    --primary-dark: 99 102 241;
-    --accent: 34 211 238;
+    --primary: 45 212 191;
+    --primary-dark: 20 184 166;
+    --accent: 96 165 250;
     --success: 52 211 153;
     --warning: 251 191 36;
     --danger: 248 113 113;
@@ -40,8 +40,8 @@
     --text-secondary: 168 178 196;
     --text-muted: 122 134 158;
     --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
-    --page-glow-1: rgb(99 102 241 / 0.16);
-    --page-glow-2: rgb(34 211 238 / 0.08);
+    --page-glow-1: rgb(20 184 166 / 0.14);
+    --page-glow-2: rgb(16 185 129 / 0.07);
   }
 
   * {
@@ -105,8 +105,8 @@
     @apply text-white font-semibold px-4 py-2.5 rounded-xl min-h-[44px]
            transition-all duration-200 active:scale-[0.97] hover:-translate-y-px hover:brightness-110
            disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:translate-y-0;
-    background-image: linear-gradient(135deg, #4f46e5, #7c3aed);
-    box-shadow: 0 6px 18px rgb(79 70 229 / 0.35);
+    background-image: linear-gradient(135deg, #0f766e, #059669);
+    box-shadow: 0 6px 18px rgb(15 118 110 / 0.35);
   }
 
   .btn-ghost {
@@ -133,8 +133,8 @@
 
   .nav-item-active {
     @apply text-white hover:text-white;
-    background-image: linear-gradient(135deg, #4f46e5, #7c3aed);
-    box-shadow: 0 6px 16px rgb(79 70 229 / 0.3);
+    background-image: linear-gradient(135deg, #0f766e, #059669);
+    box-shadow: 0 6px 16px rgb(15 118 110 / 0.3);
   }
 
   .status-dot {
@@ -145,11 +145,11 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #4f46e5, #7c3aed 60%, #db2777);
+    background-image: linear-gradient(135deg, #0f766e, #059669 60%, #16a34a);
   }
 
   .brand-gradient {
-    background-image: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background-image: linear-gradient(135deg, #0f766e, #059669);
   }
 
   .border-gradient {
