@@ -10,6 +10,8 @@ import { recordActivity, localDateString, dayBounds } from '../activityService.j
 const router = Router();
 router.use(requireLogin);
 
+const SESSION_STATUSES = ['productive', 'average', 'needs_improvement'];
+
 const bad = (res, message) => res.status(422).json({ detail: message });
 
 // Filters: ?today=true  ?date=2026-10-02  ?limit=50  ?activity_type=...  ?source=...
@@ -34,9 +36,11 @@ router.get('/', async (req, res) => {
 
 // The user writes (or speaks) an update like "Blocked because Docker won't start".
 router.post('/submit', async (req, res) => {
-  const { text, source, task_id } = req.body;
+  const { text, source, task_id, session_status } = req.body;
   if (typeof text !== 'string' || text.trim().length < 1 || text.length > 2000) return bad(res, 'text must be 1 to 2000 characters');
   if (source !== 'voice' && source !== 'text') return bad(res, "source must be 'voice' or 'text'");
+
+  if (session_status != null && !SESSION_STATUSES.includes(session_status)) return bad(res, 'Invalid session_status');
 
   const intent = extractIntent(text);
   let type = intent.activity_type;
@@ -56,7 +60,7 @@ router.post('/submit', async (req, res) => {
     taskTitle: intent.task_title,
     notes: intent.optional_notes,
     source,
-    metadata: { event: 'reminder_response', raw_text: text },
+    metadata: { event: 'reminder_response', raw_text: text, ...(session_status && { session_status }) },
   });
   res.status(201).json(activity);
 });

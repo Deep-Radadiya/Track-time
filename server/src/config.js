@@ -25,6 +25,6 @@ export const config = {
   vapidSubject: (process.env.VAPID_CLAIMS_SUB || 'mailto:you@example.com').trim().replace(/^["']+|["']+$/g, ''),
   groqApiKey: process.env.GROQ_API_KEY || '',
   groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-  accessTokenMinutes: 30,
+  accessTokenMinutes: 7 * 24 * 60, // stay logged in for a week
   refreshTokenDays: 14,
 };
