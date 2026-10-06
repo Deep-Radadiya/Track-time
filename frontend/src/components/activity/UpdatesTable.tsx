@@ -1,9 +1,15 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { Check, Pencil, X } from 'lucide-react'
+import { Check, Frown, Meh, Pencil, Smile, X } from 'lucide-react'
 import { useActivities, useUpdateActivity } from '@/hooks/useActivities'
 import { useTasks } from '@/hooks/useTasks'
 import type { ReminderActivity, Task } from '@/types/api'
+
+const SESSION_BADGE: Record<string, { label: string; icon: typeof Smile; bg: string }> = {
+  productive: { label: 'Productive', icon: Smile, bg: 'bg-green-500' },
+  average: { label: 'Average', icon: Meh, bg: 'bg-yellow-400' },
+  needs_improvement: { label: 'Needs Improvement', icon: Frown, bg: 'bg-red-500' },
+}
 
 interface UpdatesTableProps {
   /** Show only this task's updates. Omit to show all of today's updates. */
@@ -80,6 +86,16 @@ export function UpdatesTable({ taskId, date, search }: UpdatesTableProps) {
             </div>
           ) : (
             <>
+              {(() => {
+                const badge = SESSION_BADGE[String(a.metadata?.session_status)]
+                if (!badge) return null
+                const Icon = badge.icon
+                return (
+                  <span title={badge.label} aria-label={badge.label} className={`shrink-0 self-start w-6 h-6 rounded-full flex items-center justify-center text-white ${badge.bg}`}>
+                    <Icon size={14} />
+                  </span>
+                )
+              })()}
               <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-text-primary">
                 {textOf(a)}
                 {a.metadata?.edited_at ? <span className="ml-2 text-xs text-text-muted">(edited)</span> : null}

@@ -185,6 +185,7 @@ export interface ActivitySubmitRequest {
   text: string
   source: 'voice' | 'text'
   task_id?: string | null
+  session_status?: 'productive' | 'average' | 'needs_improvement' | null
 }
 
 export interface ActivityListParams {
