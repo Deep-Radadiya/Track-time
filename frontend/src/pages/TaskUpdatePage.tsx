@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Loader2 } from 'lucide-react'
+import { ArrowLeft, Send, Loader2, Smile, Meh, Frown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { activitiesApi } from '@/api/activities'
 import { ACTIVITIES_KEY } from '@/hooks/useActivities'
@@ -10,17 +10,26 @@ import { UpdatesTable } from '@/components/activity/UpdatesTable'
 import { parseApiError } from '@/lib/utils'
 import type { Task } from '@/types/api'
 
+type SessionStatus = 'productive' | 'average' | 'needs_improvement'
+const SESSION_STATUSES: { value: SessionStatus; label: string; icon: typeof Smile; bg: string }[] = [
+  { value: 'productive', label: 'Productive', icon: Smile, bg: 'bg-green-500' },
+  { value: 'average', label: 'Average', icon: Meh, bg: 'bg-yellow-400' },
+  { value: 'needs_improvement', label: 'Needs Improvement', icon: Frown, bg: 'bg-red-500' },
+]
+
 export default function TaskUpdatePage() {
   const { taskId } = useParams<{ taskId: string }>()
   const { data: tasks = [], isLoading } = useTasks()
   const task = tasks.find((t: Task) => t.id === taskId)
   const [text, setText] = useState('')
+  const [sessionStatus, setSessionStatus] = useState<SessionStatus | null>(null)
   const qc = useQueryClient()
 
   const submit = useMutation({
-    mutationFn: () => activitiesApi.submit({ text: text.trim(), source: 'text', task_id: taskId ?? null }),
+    mutationFn: () => activitiesApi.submit({ text: text.trim(), source: 'text', task_id: taskId ?? null, session_status: sessionStatus }),
     onSuccess: () => {
       setText('')
+      setSessionStatus(null)
       qc.invalidateQueries({ queryKey: ACTIVITIES_KEY })
       toast.success('Update saved')
     },
@@ -48,6 +57,28 @@ export default function TaskUpdatePage() {
           className="glass-card p-4 space-y-3"
         >
           <label className="block text-sm font-semibold text-text-primary">What did you do since the last update?</label>
+          <div className="flex items-center justify-center gap-5 py-1">
+            {SESSION_STATUSES.map(({ value, label, icon: Icon, bg }) => {
+              const selected = sessionStatus === value
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  title={label}
+                  aria-label={label}
+                  aria-pressed={selected}
+                  disabled={submit.isPending}
+                  onClick={() => setSessionStatus(selected ? null : value)}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <span className={`w-10 h-10 rounded-full flex items-center justify-center text-white transition-all ${bg} ${selected ? 'ring-2 ring-offset-2 ring-text-primary scale-105' : sessionStatus ? 'opacity-40' : ''}`}>
+                    <Icon size={20} />
+                  </span>
+                  <span className="text-xs text-text-secondary">{label}</span>
+                </button>
+              )
+            })}
+          </div>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}

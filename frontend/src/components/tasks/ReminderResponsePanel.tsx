@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
-import { Mic, MicOff, Send, X, Loader2, CheckCircle2, AlertTriangle, Play, Activity } from 'lucide-react'
+import { Mic, MicOff, Send, X, Loader2, CheckCircle2, AlertTriangle, Play, Activity, Smile, Meh, Frown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useVoiceInput } from '@/hooks/useVoiceInput'
 import { activitiesApi } from '@/api/activities'
@@ -39,6 +39,12 @@ const INTENT_CONFIG: Partial<Record<
     icon: <Activity size={12} />,
   },
 }
+type SessionStatus = 'productive' | 'average' | 'needs_improvement'
+const SESSION_STATUSES: { value: SessionStatus; label: string; icon: React.ReactNode; bg: string }[] = [
+  { value: 'productive', label: 'Productive', icon: <Smile size={22} />, bg: 'bg-green-500' },
+  { value: 'average', label: 'Average', icon: <Meh size={22} />, bg: 'bg-yellow-400' },
+  { value: 'needs_improvement', label: 'Needs Improvement', icon: <Frown size={22} />, bg: 'bg-red-500' },
+]
 // ── Example hints ─────────────────────────────────────────────────────────────
 const HINTS = [
   'I completed login',
@@ -109,6 +115,7 @@ export function ReminderResponsePanel({ taskId, onClose }: ReminderResponsePanel
   } = useVoiceInput()
   const [inputMode, setInputMode] = useState<'idle' | 'voice' | 'text'>('idle')
   const [textInput, setTextInput] = useState('')
+  const [sessionStatus, setSessionStatus] = useState<SessionStatus | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [result, setResult] = useState<ReminderActivity | null>(null)
   const [hintIndex, setHintIndex] = useState(Math.floor(Math.random() * HINTS.length))
@@ -140,6 +147,7 @@ export function ReminderResponsePanel({ taskId, onClose }: ReminderResponsePanel
         text,
         source,
         task_id: taskId ?? null,
+        session_status: sessionStatus,
       })
       setResult(activity)
       queryClient.invalidateQueries({ queryKey: ACTIVITIES_KEY })
@@ -150,7 +158,7 @@ export function ReminderResponsePanel({ taskId, onClose }: ReminderResponsePanel
     } finally {
       setIsSubmitting(false)
     }
-  }, [canSubmit, effectiveText, inputMode, queryClient, taskId])
+  }, [canSubmit, effectiveText, inputMode, queryClient, taskId, sessionStatus])
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -161,6 +169,7 @@ export function ReminderResponsePanel({ taskId, onClose }: ReminderResponsePanel
     setResult(null)
     resetTranscript()
     setTextInput('')
+    setSessionStatus(null)
     setInputMode('idle')
     setHintIndex((i) => (i + 1) % HINTS.length)
   }
@@ -200,6 +209,33 @@ export function ReminderResponsePanel({ taskId, onClose }: ReminderResponsePanel
         {/* Input area (hidden after result) */}
         {!result && (
           <>
+            {/* Session status */}
+            <div className="flex items-center justify-center gap-5">
+              {SESSION_STATUSES.map((st) => {
+                const selected = sessionStatus === st.value
+                return (
+                  <button
+                    key={st.value}
+                    type="button"
+                    title={st.label}
+                    aria-label={st.label}
+                    aria-pressed={selected}
+                    disabled={isSubmitting}
+                    onClick={() => setSessionStatus(selected ? null : st.value)}
+                    className="flex flex-col items-center gap-1"
+                  >
+                    <span
+                      className={`w-11 h-11 rounded-full flex items-center justify-center text-white transition-all ${st.bg} ${
+                        selected ? 'ring-2 ring-offset-2 ring-text-primary scale-105' : sessionStatus ? 'opacity-40' : ''
+                      }`}
+                    >
+                      {st.icon}
+                    </span>
+                    <span className="text-[10px] text-text-secondary">{st.label}</span>
+                  </button>
+                )
+              })}
+            </div>
             {/* Text area */}
             <div className="relative">
               <textarea
