@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Loader2, Smile, Meh, Frown } from 'lucide-react'
+import { ArrowLeft, Send, Loader2, Check, Ellipsis, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { activitiesApi } from '@/api/activities'
 import { ACTIVITIES_KEY } from '@/hooks/useActivities'
@@ -11,10 +11,10 @@ import { parseApiError } from '@/lib/utils'
 import type { Task } from '@/types/api'
 
 type SessionStatus = 'productive' | 'average' | 'needs_improvement'
-const SESSION_STATUSES: { value: SessionStatus; label: string; icon: typeof Smile; bg: string }[] = [
-  { value: 'productive', label: 'Productive', icon: Smile, bg: 'bg-green-500' },
-  { value: 'average', label: 'Average', icon: Meh, bg: 'bg-yellow-400' },
-  { value: 'needs_improvement', label: 'Needs Improvement', icon: Frown, bg: 'bg-red-500' },
+const SESSION_STATUSES: { value: SessionStatus; label: string; icon: typeof Check; bg: string }[] = [
+  { value: 'productive', label: 'Productive', icon: Check, bg: 'bg-green-500' },
+  { value: 'average', label: 'Average', icon: Ellipsis, bg: 'bg-yellow-400' },
+  { value: 'needs_improvement', label: 'Needs Improvement', icon: X, bg: 'bg-red-500' },
 ]
 
 export default function TaskUpdatePage() {
@@ -72,9 +72,8 @@ export default function TaskUpdatePage() {
                   className="flex flex-col items-center gap-1"
                 >
                   <span className={`w-10 h-10 rounded-full flex items-center justify-center text-white transition-all ${bg} ${selected ? 'ring-2 ring-offset-2 ring-text-primary scale-105' : sessionStatus ? 'opacity-40' : ''}`}>
-                    <Icon size={20} />
+                    <Icon size={23} strokeWidth={2.5} />
                   </span>
-                  <span className="text-xs text-text-secondary">{label}</span>
                 </button>
               )
             })}
