@@ -101,6 +101,10 @@ export interface TaskUpdateRequest {
   due_at?: string | null
   interval_minutes?: number | null
   category?: string | null
+  window_start?: string | null
+  window_end?: string | null
+  lunch_start?: string | null
+  lunch_end?: string | null
 }
 
 export interface TaskActionRequest {

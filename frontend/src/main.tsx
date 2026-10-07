@@ -40,14 +40,19 @@ async function initApp() {
       // Attempt to fetch user to fully hydrate auth state.
       const user = await authApi.me()
       useAuthStore.getState().setAuth(token, user)
-    } catch {
-      // Token is expired or invalid — wipe ALL stale state so the user
-      // lands on a clean login/signup page without a corrupted auth context.
-      // This prevents the Axios interceptor from attaching a bad token to
-      // login/signup requests and triggering a false "Network Error".
-      localStorage.removeItem('refresh_token')
-      await idbClearToken()
-      useAuthStore.getState().clearAuth()
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status
+      if (status === 401 || status === 403) {
+        // Token is expired or invalid — wipe ALL stale state so the user
+        // lands on a clean login/signup page without a corrupted auth context.
+        // This prevents the Axios interceptor from attaching a bad token to
+        // login/signup requests and triggering a false "Network Error".
+        localStorage.removeItem('refresh_token')
+        await idbClearToken()
+        useAuthStore.getState().clearAuth()
+      }
+      // Any other error means the server is asleep or offline, not that the login is bad,
+      // so the saved login is kept.
     }
   }
 

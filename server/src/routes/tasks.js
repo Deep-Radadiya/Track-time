@@ -135,6 +135,27 @@ router.patch('/:id', async (req, res) => {
     // Keep the three time fields in sync so the scheduler fires at the right time.
     task.due_at = task.next_due_at = task.anchor_time = dueAt;
   }
+  if (b.window_start !== undefined) {
+    // Changing the daily time window (same rules as when creating): move to the next free slot.
+    const windowStart = normalizeTime(b.window_start);
+    const windowEnd = normalizeTime(b.window_end);
+    if (!windowStart || !windowEnd) return bad(res, 'window_start and window_end must be set together');
+    if (toSeconds(windowEnd) <= toSeconds(windowStart)) return bad(res, 'End time must be after start time');
+    if (!(task.interval_minutes > 0)) return bad(res, 'interval_minutes is required with a time window');
+    const hasLunch = b.lunch_start != null || b.lunch_end != null;
+    const lunchStart = hasLunch ? normalizeTime(b.lunch_start) : null;
+    const lunchEnd = hasLunch ? normalizeTime(b.lunch_end) : null;
+    if (hasLunch) {
+      if (!lunchStart || !lunchEnd) return bad(res, 'lunch_start and lunch_end must be set together');
+      if (toSeconds(lunchEnd) <= toSeconds(lunchStart)) return bad(res, 'Lunch end must be after lunch start');
+    }
+    const next = nextWindowSlot(new Date(), req.user.timezone, windowStart, windowEnd, task.interval_minutes, lunchStart, lunchEnd);
+    if (!next) return bad(res, 'No reminder slots fit in that time window');
+    Object.assign(task, { recurrence: 'interval', window_start: windowStart, window_end: windowEnd, lunch_start: lunchStart, lunch_end: lunchEnd });
+    task.due_at = task.next_due_at = task.anchor_time = next;
+    task.snoozed_until = null;
+    cancelNotification(req.user._id, task._id);
+  }
   await task.save();
 
   const statusChanged = b.status !== undefined && b.status !== oldStatus;

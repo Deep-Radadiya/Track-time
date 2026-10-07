@@ -8,13 +8,13 @@ interface TaskCreateModalProps {
   onClose: () => void
 }
 
-const INTERVALS = [
+export const INTERVALS = [
   { value: 15, label: '15 min' },
   { value: 30, label: '30 min' },
   { value: 60, label: '1 hour' },
 ]
 
-const CATEGORIES = ['Work', 'Personal', 'Study', 'Health', 'Other']
+export const CATEGORIES = ['Work', 'Personal', 'Study', 'Health', 'Other']
 
 const DEFAULTS = {
   title: '',
@@ -28,13 +28,13 @@ const DEFAULTS = {
   lunchEnd: '14:00',
 }
 
-function fmt(t: string) {
+export function fmt(t: string) {
   const [h, m] = t.split(':').map(Number)
   const suffix = h >= 12 ? 'PM' : 'AM'
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${suffix}`
 }
 
-function StepLabel({ n, children }: { n: number; children: React.ReactNode }) {
+export function StepLabel({ n, children }: { n: number; children: React.ReactNode }) {
   return (
     <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
       <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[11px]">{n}</span>
