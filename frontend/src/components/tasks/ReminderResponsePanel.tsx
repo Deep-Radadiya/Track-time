@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
-import { Mic, MicOff, Send, X, Loader2, CheckCircle2, AlertTriangle, Play, Activity, Smile, Meh, Frown } from 'lucide-react'
+import { Mic, MicOff, Send, X, Loader2, CheckCircle2, AlertTriangle, Play, Activity, Check, Ellipsis } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useVoiceInput } from '@/hooks/useVoiceInput'
 import { activitiesApi } from '@/api/activities'
@@ -41,9 +41,9 @@ const INTENT_CONFIG: Partial<Record<
 }
 type SessionStatus = 'productive' | 'average' | 'needs_improvement'
 const SESSION_STATUSES: { value: SessionStatus; label: string; icon: React.ReactNode; bg: string }[] = [
-  { value: 'productive', label: 'Productive', icon: <Smile size={22} />, bg: 'bg-green-500' },
-  { value: 'average', label: 'Average', icon: <Meh size={22} />, bg: 'bg-yellow-400' },
-  { value: 'needs_improvement', label: 'Needs Improvement', icon: <Frown size={22} />, bg: 'bg-red-500' },
+  { value: 'productive', label: 'Productive', icon: <Check size={23} strokeWidth={2.5} />, bg: 'bg-green-500' },
+  { value: 'average', label: 'Average', icon: <Ellipsis size={23} strokeWidth={2.5} />, bg: 'bg-yellow-400' },
+  { value: 'needs_improvement', label: 'Needs Improvement', icon: <X size={23} strokeWidth={2.5} />, bg: 'bg-red-500' },
 ]
 // ── Example hints ─────────────────────────────────────────────────────────────
 const HINTS = [
@@ -231,7 +231,6 @@ export function ReminderResponsePanel({ taskId, onClose }: ReminderResponsePanel
                     >
                       {st.icon}
                     </span>
-                    <span className="text-[10px] text-text-secondary">{st.label}</span>
                   </button>
                 )
               })}

@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { Check, Frown, Meh, Pencil, Smile, X } from 'lucide-react'
+import { Check, Ellipsis, Pencil, X } from 'lucide-react'
 import { useActivities, useUpdateActivity } from '@/hooks/useActivities'
 import { useTasks } from '@/hooks/useTasks'
 import type { ReminderActivity, Task } from '@/types/api'
 
-const SESSION_BADGE: Record<string, { label: string; icon: typeof Smile; bg: string }> = {
-  productive: { label: 'Productive', icon: Smile, bg: 'bg-green-500' },
-  average: { label: 'Average', icon: Meh, bg: 'bg-yellow-400' },
-  needs_improvement: { label: 'Needs Improvement', icon: Frown, bg: 'bg-red-500' },
+const SESSION_BADGE: Record<string, { label: string; icon: typeof Check; bg: string }> = {
+  productive: { label: 'Productive', icon: Check, bg: 'bg-green-500' },
+  average: { label: 'Average', icon: Ellipsis, bg: 'bg-yellow-400' },
+  needs_improvement: { label: 'Needs Improvement', icon: X, bg: 'bg-red-500' },
 }
 
 interface UpdatesTableProps {
@@ -92,7 +92,7 @@ export function UpdatesTable({ taskId, date, search }: UpdatesTableProps) {
                 const Icon = badge.icon
                 return (
                   <span title={badge.label} aria-label={badge.label} className={`shrink-0 self-start w-6 h-6 rounded-full flex items-center justify-center text-white ${badge.bg}`}>
-                    <Icon size={14} />
+                    <Icon size={15} strokeWidth={2.5} />
                   </span>
                 )
               })()}
