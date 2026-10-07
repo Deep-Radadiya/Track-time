@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, CheckSquare, Mic, BarChart2, ClipboardList, Settings } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, /* Mic, BarChart2, */ ClipboardList, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
   { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
-  { to: '/voice', icon: Mic, label: 'Voice' },
+  // { to: '/voice', icon: Mic, label: 'Voice' },
   { to: '/updates', icon: ClipboardList, label: 'Updates' },
-  { to: '/summary', icon: BarChart2, label: 'Summary' },
+  // { to: '/summary', icon: BarChart2, label: 'Summary' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 

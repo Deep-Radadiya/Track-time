@@ -4,15 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as zod from 'zod'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate, Link } from 'react-router-dom'
-import { parseApiError, TIMEZONES } from '@/lib/utils'
+import { parseApiError } from '@/lib/utils'
 import toast from 'react-hot-toast'
-import { Bell, Loader2, Mail, Lock, Globe } from 'lucide-react'
+import { Bell, Loader2, Mail, Lock } from 'lucide-react'
 import { idbClearToken } from '@/stores/authStore'
 
 const signupSchema = zod.object({
   email: zod.string().email('Please enter a valid email address'),
   password: zod.string().min(8, 'Password must be at least 8 characters long'),
-  timezone: zod.string().nonempty('Please select your timezone'),
 })
 
 type SignupFormValues = zod.infer<typeof signupSchema>
@@ -28,15 +27,13 @@ export function SignupForm() {
     formState: { errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: {
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-    },
   })
 
   const onSubmit = async (values: SignupFormValues) => {
     setLoading(true)
     try {
-      await signup(values.email, values.password, values.timezone)
+      // The timezone is taken from the browser, so the user is not asked for it.
+      await signup(values.email, values.password, Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
       toast.success('Account created successfully!')
       navigate('/dashboard')
     } catch (err) {
@@ -100,25 +97,6 @@ export function SignupForm() {
             />
           </div>
           {errors.password && <p className="text-xs text-danger mt-1">{errors.password.message}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">Timezone</label>
-          <div className="relative">
-            <Globe className="absolute left-3 top-3 h-5 w-5 text-text-muted" />
-            <select
-              {...register('timezone')}
-              className="input-field pl-10 appearance-none bg-bg-elevated"
-              disabled={loading}
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>
-                  {tz}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errors.timezone && <p className="text-xs text-danger mt-1">{errors.timezone.message}</p>}
         </div>
 
         <button type="submit" className="btn-primary w-full py-2.5 flex items-center justify-center gap-2" disabled={loading}>
