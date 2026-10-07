@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, CheckSquare, Mic, BarChart2, ClipboardList, Settings, LogOut, Wifi, WifiOff, Loader2, Bell
+  LayoutDashboard, CheckSquare, /* Mic, BarChart2, */ ClipboardList, Settings, LogOut, Wifi, WifiOff, Loader2, Bell
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useWsStore } from '@/stores/wsStore'
@@ -12,9 +12,9 @@ import { ThemeToggle } from './ThemeToggle'
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
-  { to: '/voice', icon: Mic, label: 'Voice Input' },
+  // { to: '/voice', icon: Mic, label: 'Voice Input' },
   { to: '/updates', icon: ClipboardList, label: 'Updates' },
-  { to: '/summary', icon: BarChart2, label: 'Summary' },
+  // { to: '/summary', icon: BarChart2, label: 'Summary' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
@@ -73,7 +73,6 @@ export function Sidebar() {
       <div className="border-t border-border pt-3 mt-2">
         <div className="px-2 mb-2">
           <p className="text-xs text-text-muted truncate">{user?.email}</p>
-          <p className="text-xs text-text-muted/60">{user?.timezone}</p>
         </div>
         <button onClick={handleLogout} className="nav-item w-full text-danger hover:text-danger hover:bg-danger/10">
           <LogOut size={18} />
