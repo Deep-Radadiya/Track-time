@@ -1,22 +1,9 @@
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as zod from 'zod'
+import { useEffect, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { useUpdateTask } from '@/hooks/useTasks'
 import type { Task } from '@/types/api'
-import { parseISO, format } from 'date-fns'
-
-const taskUpdateSchema = zod.object({
-  title: zod.string().min(1, 'Title is required'),
-  due_at: zod.string().optional().or(zod.literal('')),
-  recurrence: zod.enum(['none', 'interval', 'daily', 'weekly']),
-  interval_minutes: zod.number().nullable().optional(),
-  category: zod.string().optional(),
-})
-
-type TaskUpdateFormValues = zod.infer<typeof taskUpdateSchema>
+import { INTERVALS, CATEGORIES, fmt, StepLabel } from './TaskCreateModal'
 
 interface TaskEditModalProps {
   open: boolean
@@ -24,74 +11,77 @@ interface TaskEditModalProps {
   task: Task
 }
 
+const hhmm = (t: string | null | undefined, fallback: string) => (t ? t.slice(0, 5) : fallback)
+
+function formFromTask(task: Task) {
+  const interval = task.interval_minutes ?? 60
+  return {
+    title: task.title,
+    start: hhmm(task.window_start, '09:00'),
+    end: hhmm(task.window_end, '18:00'),
+    interval,
+    customInterval: !INTERVALS.some((i) => i.value === interval),
+    category: task.category || 'Work',
+    lunchOn: !!task.lunch_start,
+    lunchStart: hhmm(task.lunch_start, '13:00'),
+    lunchEnd: hhmm(task.lunch_end, '14:00'),
+  }
+}
+
 export function TaskEditModal({ open, onClose, task }: TaskEditModalProps) {
   const updateMutation = useUpdateTask()
+  const [form, setForm] = useState(() => formFromTask(task))
+  const [error, setError] = useState<string | null>(null)
 
-  const formatInitialDate = (isoStr: string | null) => {
-    if (!isoStr) return ''
-    try {
-      const parsed = parseISO(isoStr)
-      return format(parsed, "yyyy-MM-dd'T'HH:mm")
-    } catch {
-      return ''
-    }
-  }
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    formState: { errors },
-  } = useForm<TaskUpdateFormValues>({
-    resolver: zodResolver(taskUpdateSchema),
-    defaultValues: {
-      title: task.title,
-      due_at: formatInitialDate(task.due_at),
-      recurrence: task.recurrence,
-      interval_minutes: task.interval_minutes,
-      category: task.category || '',
-    },
-  })
-
-  // Ensure form updates if task changes
+  // Start from the saved values every time the popup opens.
   useEffect(() => {
     if (open) {
-      reset({
-        title: task.title,
-        due_at: formatInitialDate(task.due_at),
-        recurrence: task.recurrence,
-        interval_minutes: task.interval_minutes,
-        category: task.category || '',
-      })
+      setForm(formFromTask(task))
+      setError(null)
     }
-  }, [open, task, reset])
+  }, [open, task])
 
-  const recurrenceValue = watch('recurrence')
+  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
-  const onSubmit = async (values: TaskUpdateFormValues) => {
-    let isoDue: string | null = null
-    if (values.due_at) {
-      isoDue = new Date(values.due_at).toISOString()
-    }
-
-    const payload = {
-      title: values.title,
-      due_at: isoDue,
-      recurrence: values.recurrence,
-      interval_minutes: values.recurrence === 'interval' ? values.interval_minutes : null,
-      category: values.category || null,
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.title.trim()) return setError('Please enter what you want to be reminded about.')
+    if (form.end <= form.start) return setError('End time must be after start time.')
+    if (!Number.isInteger(form.interval) || form.interval < 1 || form.interval > 720)
+      return setError('Enter a reminder interval between 1 and 720 minutes.')
+    if (form.lunchOn && form.lunchEnd <= form.lunchStart) return setError('Lunch end must be after lunch start.')
+    setError(null)
 
     updateMutation.mutate(
-      { id: task.id, data: payload },
       {
-        onSuccess: () => {
-          onClose()
+        id: task.id,
+        data: {
+          title: form.title.trim(),
+          interval_minutes: form.interval,
+          window_start: form.start,
+          window_end: form.end,
+          lunch_start: form.lunchOn ? form.lunchStart : null,
+          lunch_end: form.lunchOn ? form.lunchEnd : null,
+          category: form.category,
         },
-      }
+      },
+      { onSuccess: onClose },
     )
   }
+
+  const busy = updateMutation.isPending
+  const intervalLabel = INTERVALS.find((i) => i.value === form.interval)?.label ?? `${form.interval || '?'} min`
+  const summary =
+    `Every ${intervalLabel} from ${fmt(form.start)} to ${fmt(form.end)}` +
+    (form.lunchOn ? `, paused for lunch ${fmt(form.lunchStart)} – ${fmt(form.lunchEnd)}.` : '.')
+
+  const chip = (active: boolean) =>
+    `px-3.5 py-2 rounded-xl text-sm border transition-all ${
+      active
+        ? 'bg-primary/20 border-primary text-primary font-semibold'
+        : 'border-border text-text-secondary hover:bg-ink/5'
+    }`
 
   return (
     <Dialog.Root open={open} onOpenChange={(o: boolean) => { if (!o) onClose() }}>
@@ -104,109 +94,112 @@ export function TaskEditModal({ open, onClose, task }: TaskEditModalProps) {
               <X size={18} />
             </Dialog.Close>
           </div>
+          <Dialog.Description className="sr-only">
+            Change what to be reminded about, the daily time range, how often, a category and a lunch break.
+          </Dialog.Description>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                Reminder Title *
-              </label>
+              <StepLabel n={1}>What should we remind you about?</StepLabel>
               <input
                 type="text"
-                {...register('title')}
+                value={form.title}
+                onChange={(e) => set('title', e.target.value)}
+                placeholder="e.g. Drink water, Check emails, Stretch"
                 className="input-field"
-                disabled={updateMutation.isPending}
+                disabled={busy}
               />
-              {errors.title && <p className="text-xs text-danger mt-1">{errors.title.message}</p>}
             </div>
 
-            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                  Due At
-                </label>
-                <input
-                  type="datetime-local"
-                  {...register('due_at')}
-                  className="input-field "
-                  disabled={updateMutation.isPending}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  {...register('category')}
-                  className="input-field"
-                  disabled={updateMutation.isPending}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                  Recurrence
-                </label>
-                <select
-                  {...register('recurrence')}
-                  className="input-field"
-                  disabled={updateMutation.isPending}
-                >
-                  <option value="none">One-off (None)</option>
-                  <option value="interval">Interval (Minutes)</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                </select>
-              </div>
-
-              {recurrenceValue === 'interval' && (
+            <div>
+              <StepLabel n={2}>When should reminders run each day?</StepLabel>
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4 mb-3">
                 <div>
-                  <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                    Interval Minutes
-                  </label>
+                  <span className="block text-xs text-text-muted mb-1">From</span>
+                  <input type="time" value={form.start} onChange={(e) => set('start', e.target.value)}
+                    className="input-field " disabled={busy} />
+                </div>
+                <div>
+                  <span className="block text-xs text-text-muted mb-1">To</span>
+                  <input type="time" value={form.end} onChange={(e) => set('end', e.target.value)}
+                    className="input-field " disabled={busy} />
+                </div>
+              </div>
+              <span className="block text-xs text-text-muted mb-1">Remind me every</span>
+              <div className="flex flex-wrap gap-2">
+                {INTERVALS.map((i) => (
+                  <button key={i.value} type="button" disabled={busy}
+                    onClick={() => setForm((f) => ({ ...f, interval: i.value, customInterval: false }))}
+                    className={chip(!form.customInterval && form.interval === i.value)}>
+                    {i.label}
+                  </button>
+                ))}
+                <button type="button" disabled={busy}
+                  onClick={() => set('customInterval', true)} className={chip(form.customInterval)}>
+                  Custom
+                </button>
+              </div>
+              {form.customInterval && (
+                <div className="flex items-center gap-2 mt-3">
                   <input
                     type="number"
-                    {...register('interval_minutes', { valueAsNumber: true })}
-                    className="input-field"
-                    disabled={updateMutation.isPending}
+                    min={1}
+                    max={720}
+                    value={Number.isNaN(form.interval) ? '' : form.interval}
+                    onChange={(e) => set('interval', e.target.value === '' ? NaN : Number(e.target.value))}
+                    className="input-field w-28"
+                    placeholder="e.g. 45"
+                    disabled={busy}
                   />
+                  <span className="text-sm text-text-secondary">minutes</span>
                 </div>
               )}
             </div>
 
-            {task.notes && task.notes.length > 0 && (
-              <div className="space-y-2 border-t border-border/30 pt-3">
-                <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider block mb-1">
-                  Checklist Notes (Read-Only)
-                </span>
-                <div className="space-y-1">
-                  {task.notes.map((note) => (
-                    <div key={note.id} className="text-xs bg-bg-surface border border-border/40 rounded-lg p-2 text-text-secondary">
-                      {note.text}
-                    </div>
-                  ))}
-                </div>
+            <div>
+              <StepLabel n={3}>Category</StepLabel>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((c) => (
+                  <button key={c} type="button" disabled={busy}
+                    onClick={() => set('category', c)} className={chip(form.category === c)}>
+                    {c}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            <div>
+              <StepLabel n={4}>Lunch break</StepLabel>
+              <label className="flex items-center gap-2 text-sm text-text-secondary mb-2 cursor-pointer">
+                <input type="checkbox" checked={form.lunchOn} onChange={(e) => set('lunchOn', e.target.checked)}
+                  disabled={busy} className="accent-primary" />
+                Don&apos;t remind me during lunch
+              </label>
+              {form.lunchOn && (
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <span className="block text-xs text-text-muted mb-1">Lunch starts</span>
+                    <input type="time" value={form.lunchStart} onChange={(e) => set('lunchStart', e.target.value)}
+                      className="input-field " disabled={busy} />
+                  </div>
+                  <div>
+                    <span className="block text-xs text-text-muted mb-1">Lunch ends</span>
+                    <input type="time" value={form.lunchEnd} onChange={(e) => set('lunchEnd', e.target.value)}
+                      className="input-field " disabled={busy} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <p className="text-sm text-text-secondary bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
+              {summary}
+            </p>
+            {error && <p className="text-sm text-danger">{error}</p>}
 
             <div className="flex justify-end gap-3 pt-3 border-t border-border/30 sticky -bottom-4 sm:-bottom-6 bg-bg-surface -mb-4 sm:-mb-6 pb-4 sm:pb-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-ghost"
-                disabled={updateMutation.isPending}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn-primary"
-                disabled={updateMutation.isPending}
-              >
-                {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+              <button type="button" onClick={onClose} className="btn-ghost" disabled={busy}>Cancel</button>
+              <button type="submit" className="btn-primary" disabled={busy}>
+                {busy ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>

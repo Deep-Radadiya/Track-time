@@ -120,11 +120,11 @@ export function TaskCard({ task }: TaskCardProps) {
         </div>
       </div>
 
-      {/* Due date display */}
-      {task.due_at && (
+      {/* When the next reminder will go off */}
+      {task.next_due_at && (
         <div className="flex items-center gap-1.5 text-xs text-text-secondary select-none">
           <Calendar size={14} className="text-text-muted" />
-          <span>{formatDueDate(task.due_at)}</span>
+          <span>Next reminder: {formatDueDate(task.next_due_at)}</span>
         </div>
       )}
 

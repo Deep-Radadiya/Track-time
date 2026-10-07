@@ -12,6 +12,7 @@ export function useTasks() {
     queryKey: TASKS_KEY,
     queryFn: () => tasksApi.list(0, 100),
     staleTime: 30_000,
+    refetchInterval: 30_000, // fallback in case a live update is missed
   })
 }
 

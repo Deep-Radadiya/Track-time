@@ -7,6 +7,7 @@ import { User } from '../models/User.js';
 import { Device } from '../models/Device.js';
 import { NotificationLog } from '../models/NotificationLog.js';
 import { sendPush, reminderPayload, GoneError } from '../push.js';
+import { broadcast } from '../websocket.js';
 import { quietHoursEnd, rollWindowForward, advanceRecurrence } from '../taskService.js';
 
 export async function checkDueReminders() {
@@ -46,6 +47,7 @@ async function sendReminder(task, now) {
     if (task.snoozed_until && task.snoozed_until <= now) task.snoozed_until = quietUntil;
     else task.next_due_at = quietUntil;
     await task.save();
+    broadcast(user.id, { event: 'task_updated', task_id: task.id });
     return;
   }
 
@@ -53,6 +55,7 @@ async function sendReminder(task, now) {
   if (devices.length === 0) {
     rollWindowForward(task, user, now);
     await task.save();
+    broadcast(user.id, { event: 'task_updated', task_id: task.id });
     return;
   }
 
@@ -83,4 +86,5 @@ async function sendReminder(task, now) {
 
   rollWindowForward(task, user, now); // window reminders get their next slot
   await task.save();
+  broadcast(user.id, { event: 'task_updated', task_id: task.id }); // so open screens show the new time
 }
