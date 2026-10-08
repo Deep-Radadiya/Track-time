@@ -190,6 +190,7 @@ export interface ActivitySubmitRequest {
   source: 'voice' | 'text'
   task_id?: string | null
   session_status?: 'productive' | 'average' | 'needs_improvement' | null
+  reminder_time?: string | null
 }
 
 export interface ActivityListParams {

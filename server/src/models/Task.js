@@ -32,6 +32,8 @@ const taskSchema = new mongoose.Schema(
 
     // The next moment this reminder should fire. The scheduler looks at this field.
     next_due_at: { type: Date, default: null, index: true },
+    // The time of the last reminder that was sent. Updates written afterwards are saved at this time.
+    last_reminded_at: { type: Date, default: null },
     snoozed_until: { type: Date, default: null },
     snoozed_count_today: { type: Number, default: 0 },
     snoozed_count_total: { type: Number, default: 0 },
