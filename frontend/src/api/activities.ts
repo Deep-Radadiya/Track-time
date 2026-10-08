@@ -8,6 +8,6 @@ export const activitiesApi = {
   submit: (data: ActivitySubmitRequest): Promise<ReminderActivity> =>
     api.post<ReminderActivity>('/activities/submit', data).then((r) => r.data),
 
-  update: (id: string, text: string): Promise<ReminderActivity> =>
-    api.patch<ReminderActivity>(`/activities/${id}`, { text }).then((r) => r.data),
+  update: (id: string, text: string, session_status?: ActivitySubmitRequest['session_status']): Promise<ReminderActivity> =>
+    api.patch<ReminderActivity>(`/activities/${id}`, { text, ...(session_status !== undefined && { session_status }) }).then((r) => r.data),
 }
