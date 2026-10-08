@@ -18,10 +18,12 @@ interface UpdatesTableProps {
   date?: string
   /** Only keep updates whose text or task name contains this. */
   search?: string
+  /** When given, the pencil hands the update to the page (to edit it in the form above) instead of editing in the row. */
+  onEdit?: (update: ReminderActivity) => void
 }
 
 /** Today's updates, grouped by task (one card per task, oldest first). */
-export function UpdatesTable({ taskId, date, search }: UpdatesTableProps) {
+export function UpdatesTable({ taskId, date, search, onEdit }: UpdatesTableProps) {
   const { data: activities = [], isLoading, error } = useActivities(date ? { date, limit: 200 } : { today: true, limit: 200 })
   const { data: tasks = [] } = useTasks()
   const saveUpdate = useUpdateActivity()
@@ -101,7 +103,7 @@ export function UpdatesTable({ taskId, date, search }: UpdatesTableProps) {
                 {a.metadata?.edited_at ? <span className="ml-2 text-xs text-text-muted">(edited)</span> : null}
               </span>
               <button
-                onClick={() => startEdit(a)}
+                onClick={() => (onEdit ? onEdit(a) : startEdit(a))}
                 className="shrink-0 self-start p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-ink/5 transition-all"
                 title="Edit update"
                 aria-label="Edit update"

@@ -78,14 +78,22 @@ router.post('/submit', async (req, res) => {
 
 // Edit the text of an update you wrote earlier (today or any past day).
 router.patch('/:id', async (req, res) => {
-  const { text } = req.body;
-  if (typeof text !== 'string' || text.trim().length < 1 || text.length > 2000) return bad(res, 'text must be 1 to 2000 characters');
+  const { text, session_status } = req.body;
+  if (typeof text !== 'string' || text.length > 2000) return bad(res, 'text must be at most 2000 characters');
+  if (session_status != null && !SESSION_STATUSES.includes(session_status)) return bad(res, 'Invalid session_status');
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ detail: 'Update not found' });
 
   const activity = await Activity.findOne({ _id: req.params.id, user_id: req.user._id });
   if (!activity || activity.metadata?.event !== 'reminder_response') return res.status(404).json({ detail: 'Update not found' });
 
-  activity.metadata = { ...activity.metadata, raw_text: text.trim(), edited_at: new Date().toISOString() };
+  // The icon can be changed too: a value sets it, null clears it, leaving it out keeps it.
+  const status = session_status !== undefined ? session_status : activity.metadata?.session_status ?? null;
+  if (text.trim().length < 1 && !status) return bad(res, 'text must be 1 to 2000 characters, or pick a session status');
+
+  const metadata = { ...activity.metadata, raw_text: text.trim(), edited_at: new Date().toISOString() };
+  if (status) metadata.session_status = status;
+  else delete metadata.session_status;
+  activity.metadata = metadata;
   await activity.save();
   res.json(activity);
 });

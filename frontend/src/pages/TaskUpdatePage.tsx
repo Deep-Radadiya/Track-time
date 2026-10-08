@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { format } from 'date-fns'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Send, Loader2, Check, Ellipsis, X } from 'lucide-react'
@@ -8,7 +9,7 @@ import { ACTIVITIES_KEY } from '@/hooks/useActivities'
 import { useTasks } from '@/hooks/useTasks'
 import { UpdatesTable } from '@/components/activity/UpdatesTable'
 import { parseApiError } from '@/lib/utils'
-import type { Task } from '@/types/api'
+import type { ReminderActivity, Task } from '@/types/api'
 
 type SessionStatus = 'productive' | 'average' | 'needs_improvement'
 const SESSION_STATUSES: { value: SessionStatus; label: string; icon: typeof Check; bg: string }[] = [
@@ -26,15 +27,33 @@ export default function TaskUpdatePage() {
   const task = tasks.find((t: Task) => t.id === taskId)
   const [text, setText] = useState('')
   const [sessionStatus, setSessionStatus] = useState<SessionStatus | null>(null)
+  // The update being edited. It is loaded into this form, so the icon and the description can both be changed.
+  const [editing, setEditing] = useState<ReminderActivity | null>(null)
   const qc = useQueryClient()
 
+  const startEdit = (a: ReminderActivity) => {
+    setEditing(a)
+    setText(String(a.metadata?.raw_text ?? a.optional_notes ?? ''))
+    setSessionStatus((a.metadata?.session_status as SessionStatus | undefined) ?? null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  const cancelEdit = () => {
+    setEditing(null)
+    setText('')
+    setSessionStatus(null)
+  }
+
   const submit = useMutation({
-    mutationFn: () => activitiesApi.submit({ text: text.trim(), source: 'text', task_id: taskId ?? null, session_status: sessionStatus, reminder_time: reminderTime }),
+    mutationFn: () =>
+      editing
+        ? activitiesApi.update(editing.id, text.trim(), sessionStatus)
+        : activitiesApi.submit({ text: text.trim(), source: 'text', task_id: taskId ?? null, session_status: sessionStatus, reminder_time: reminderTime }),
     onSuccess: () => {
+      toast.success(editing ? 'Update changed' : 'Update saved')
+      setEditing(null)
       setText('')
       setSessionStatus(null)
       qc.invalidateQueries({ queryKey: ACTIVITIES_KEY })
-      toast.success('Update saved')
     },
     onError: (err: unknown) => toast.error(parseApiError(err)),
   })
@@ -59,7 +78,16 @@ export default function TaskUpdatePage() {
           onSubmit={(e) => { e.preventDefault(); if (canSubmit) submit.mutate() }}
           className="glass-card p-4 space-y-3"
         >
-          <label className="block text-sm font-semibold text-text-primary">What did you do since the last update?</label>
+          <div className="flex items-center justify-between gap-3">
+            <label className="block text-sm font-semibold text-text-primary">
+              {editing ? `Editing the update from ${format(new Date(editing.timestamp), 'h:mm a')}` : 'What did you do since the last update?'}
+            </label>
+            {editing && (
+              <button type="button" onClick={cancelEdit} className="text-xs text-text-muted hover:text-text-primary flex items-center gap-1">
+                <X size={14} /> Cancel
+              </button>
+            )}
+          </div>
           <div className="flex items-center justify-center gap-5 py-1">
             {SESSION_STATUSES.map(({ value, label, icon: Icon, bg }) => {
               const selected = sessionStatus === value
@@ -93,7 +121,7 @@ export default function TaskUpdatePage() {
           <div className="flex justify-end">
             <button type="submit" disabled={!canSubmit} className="btn-primary flex items-center gap-1.5">
               {submit.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-              Save update
+              {editing ? 'Save changes' : 'Save update'}
             </button>
           </div>
         </form>
@@ -101,7 +129,7 @@ export default function TaskUpdatePage() {
         <p className="text-sm text-text-secondary">This reminder may have been deleted.</p>
       ) : null}
 
-      <UpdatesTable taskId={taskId} />
+      <UpdatesTable taskId={taskId} onEdit={startEdit} />
     </div>
   )
 }
