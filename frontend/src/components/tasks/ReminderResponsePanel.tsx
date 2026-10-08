@@ -121,7 +121,7 @@ export function ReminderResponsePanel({ taskId, onClose }: ReminderResponsePanel
   const [hintIndex, setHintIndex] = useState(Math.floor(Math.random() * HINTS.length))
   // The effective text: voice transcript OR typed text depending on mode
   const effectiveText = inputMode === 'voice' ? transcript.trim() : textInput.trim()
-  const canSubmit = effectiveText.length > 0 && !isSubmitting && !isRecording
+  const canSubmit = (effectiveText.length > 0 || sessionStatus !== null) && !isSubmitting && !isRecording
   const handleToggleMic = useCallback(() => {
     if (isRecording) {
       stopRecording()

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Send, Loader2, Check, Ellipsis, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -19,6 +19,9 @@ const SESSION_STATUSES: { value: SessionStatus; label: string; icon: typeof Chec
 
 export default function TaskUpdatePage() {
   const { taskId } = useParams<{ taskId: string }>()
+  // When opened from a reminder notification, the update is saved at the time that reminder was due.
+  const [searchParams] = useSearchParams()
+  const reminderTime = searchParams.get('due')
   const { data: tasks = [], isLoading } = useTasks()
   const task = tasks.find((t: Task) => t.id === taskId)
   const [text, setText] = useState('')
@@ -26,7 +29,7 @@ export default function TaskUpdatePage() {
   const qc = useQueryClient()
 
   const submit = useMutation({
-    mutationFn: () => activitiesApi.submit({ text: text.trim(), source: 'text', task_id: taskId ?? null, session_status: sessionStatus }),
+    mutationFn: () => activitiesApi.submit({ text: text.trim(), source: 'text', task_id: taskId ?? null, session_status: sessionStatus, reminder_time: reminderTime }),
     onSuccess: () => {
       setText('')
       setSessionStatus(null)
@@ -36,7 +39,7 @@ export default function TaskUpdatePage() {
     onError: (err: unknown) => toast.error(parseApiError(err)),
   })
 
-  const canSubmit = text.trim().length > 0 && !submit.isPending
+  const canSubmit = (text.trim().length > 0 || sessionStatus !== null) && !submit.isPending
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -83,7 +86,6 @@ export default function TaskUpdatePage() {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && canSubmit) submit.mutate() }}
             rows={3}
-            autoFocus
             placeholder="e.g. Finished the login page and fixed the validation bug"
             className="input-field w-full resize-none"
             disabled={submit.isPending}

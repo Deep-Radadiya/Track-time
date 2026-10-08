@@ -73,6 +73,8 @@ async function sendReminder(task, now) {
     }
   }
 
+  task.last_reminded_at = dueAt;
+
   // Clear the time that just fired, so we do not send again 60 seconds later.
   // Snooze is checked first because it takes priority.
   if (task.snoozed_until && task.snoozed_until <= now) task.snoozed_until = null;

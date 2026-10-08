@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, CheckSquare, /* Mic, BarChart2, */ ClipboardList, Settings, LogOut, Wifi, WifiOff, Loader2, Bell
+  LayoutDashboard, /* CheckSquare, */ /* Mic, BarChart2, */ ClipboardList, Settings, LogOut, Wifi, WifiOff, Loader2, Bell
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useWsStore } from '@/stores/wsStore'
@@ -11,7 +11,7 @@ import { ThemeToggle } from './ThemeToggle'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
+  // { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
   // { to: '/voice', icon: Mic, label: 'Voice Input' },
   { to: '/updates', icon: ClipboardList, label: 'Updates' },
   // { to: '/summary', icon: BarChart2, label: 'Summary' },

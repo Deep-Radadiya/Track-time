@@ -78,7 +78,7 @@ self.addEventListener('push', (event) => {
 
     if (data.type === 'reminder') {
       const options = {
-        body: `Due: ${new Date(data.due_at).toLocaleTimeString()}`,
+        body: `Due: ${new Date(data.due_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
         tag: data.tag,
         icon: '/icon-192.png',
         badge: '/badge-96.png',
@@ -140,7 +140,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   console.log('[SW] notificationclick', { action: event.action, data: event.notification.data })
-  const { task_id, action_token, summary, url } = event.notification.data || {}
+  const { task_id, due_at, action_token, summary, url } = event.notification.data || {}
 
   // If this is the summary notification, open the summary page.
   if (url === '/summary') {
@@ -247,7 +247,7 @@ self.addEventListener('notificationclick', (event) => {
     const targetUrl = isCheckin
       ? `/dashboard?checkin=1${reminderId ? `&reminderId=${reminderId}` : ''}`
       : task_id
-        ? `/update/${task_id}`
+        ? `/update/${task_id}${due_at ? `?due=${encodeURIComponent(due_at)}` : ''}`
         : '/dashboard'
 
     event.waitUntil(

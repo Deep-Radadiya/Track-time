@@ -36,11 +36,19 @@ router.get('/', async (req, res) => {
 
 // The user writes (or speaks) an update like "Blocked because Docker won't start".
 router.post('/submit', async (req, res) => {
-  const { text, source, task_id, session_status } = req.body;
-  if (typeof text !== 'string' || text.trim().length < 1 || text.length > 2000) return bad(res, 'text must be 1 to 2000 characters');
+  const { text, source, task_id, session_status, reminder_time } = req.body;
+  if (session_status != null && !SESSION_STATUSES.includes(session_status)) return bad(res, 'Invalid session_status');
+  // The note is optional when a session status icon was picked.
+  if (typeof text !== 'string' || text.length > 2000 || (text.trim().length < 1 && session_status == null)) return bad(res, 'text must be 1 to 2000 characters, or pick a session status');
   if (source !== 'voice' && source !== 'text') return bad(res, "source must be 'voice' or 'text'");
 
-  if (session_status != null && !SESSION_STATUSES.includes(session_status)) return bad(res, 'Invalid session_status');
+  // An update written for a reminder is saved at the time that reminder was due (never in the future).
+  let timestamp;
+  if (reminder_time != null) {
+    const when = new Date(reminder_time);
+    if (Number.isNaN(when.getTime())) return bad(res, 'Invalid reminder_time');
+    if (when <= new Date()) timestamp = when;
+  }
 
   const intent = extractIntent(text);
   let type = intent.activity_type;
@@ -51,6 +59,8 @@ router.post('/submit', async (req, res) => {
   if (task_id && mongoose.isValidObjectId(task_id)) {
     const task = await Task.findOne({ _id: task_id, user_id: req.user._id });
     taskId = task ? task._id : null;
+    // No reminder time sent: use the time of the reminder that was last sent for this task.
+    if (!timestamp && task?.last_reminded_at && task.last_reminded_at <= new Date()) timestamp = task.last_reminded_at;
   }
 
   const activity = await recordActivity({
@@ -60,6 +70,7 @@ router.post('/submit', async (req, res) => {
     taskTitle: intent.task_title,
     notes: intent.optional_notes,
     source,
+    timestamp,
     metadata: { event: 'reminder_response', raw_text: text, ...(session_status && { session_status }) },
   });
   res.status(201).json(activity);
