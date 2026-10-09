@@ -90,10 +90,10 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
               <span className="w-[4.5rem] shrink-0 whitespace-nowrap font-medium text-text-muted">
                 {format(new Date(m.due_at), 'h:mm a')}
               </span>
-              <span className="rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">Missed</span>
+              <span className="shrink-0 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">Missed</span>
               <span className="flex-1" />
-              <button onClick={() => addMissed(m)} className="btn-ghost !min-h-0 py-1.5 px-3 text-xs flex items-center gap-1">
-                <Plus size={14} /> Add update
+              <button onClick={() => addMissed(m)} className="btn-ghost !min-h-0 shrink-0 whitespace-nowrap py-1.5 px-2.5 text-xs flex items-center gap-1" aria-label="Add update">
+                <Plus size={14} /> Add<span className="hidden sm:inline"> update</span>
               </button>
             </li>
           )
