@@ -138,13 +138,6 @@ export interface Device {
   push_enabled: boolean
 }
 
-export interface DaySummary {
-  summary: string
-  highlight: string
-  concern: string
-  tomorrow_suggestion: string
-}
-
 export interface TaskNote{
  detail: string | Array<{ msg: string; loc: string[]; type: string }>
 }
@@ -193,23 +186,17 @@ export interface ActivitySubmitRequest {
   reminder_time?: string | null
 }
 
+export interface MissedReminder {
+  id: string
+  task_id: string
+  task_title: string
+  due_at: string
+}
+
 export interface ActivityListParams {
   today?: boolean
   date?: string
   limit?: number
   activity_type?: ActivityType
   source?: ActivitySource
-}
-
-export interface DailySummaryOut {
-  id: string
-  user_id: string
-  date: string
-  content: DaySummary
-  created_at: string
-}
-
-export interface SummaryHistoryOut {
-  summaries: DailySummaryOut[]
-  total: number
 }

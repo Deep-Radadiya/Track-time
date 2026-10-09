@@ -3,17 +3,6 @@
  */
 
 export type MessageRole = 'user' | 'assistant' | 'system';
-export type ProductivityStatus = 'focused' | 'distracted' | 'break' | 'idle';
-
-export interface HourlyCheckinReminder {
-  id: string;
-  user_id: string;
-  scheduled_time: string;
-  status: 'pending' | 'completed' | 'missed';
-  response_id: string | null;
-  created_at: string;
-}
-
 // --- Chat ---
 
 export interface ChatRequest {
@@ -36,31 +25,6 @@ export interface ChatHistoryResponse {
   total: number;
 }
 
-// --- Check-in / Productivity Logs ---
-
-export interface ProductivityLogCreate {
-  task_id?: string | null;
-  reminder_id?: string | null;
-  status: ProductivityStatus;
-  start_at?: string | null;
-  end_at?: string | null;
-  duration_seconds?: number | null;
-  note?: string | null;
-  transcript?: string | null;
-  source?: 'voice' | 'text' | null;
-}
-
-export interface ProductivityLog {
-  id: string;
-  user_id: string;
-  task_id: string | null;
-  status: ProductivityStatus;
-  start_at: string;
-  end_at: string | null;
-  duration_seconds: number | null;
-  note: string | null;
-}
-
 // --- Current Task ---
 
 export interface CurrentTaskSet {
@@ -76,27 +40,6 @@ export interface CurrentTask {
   is_active: boolean;
   started_at: string | null;
   updated_at: string;
-}
-
-// --- Summary ---
-
-export interface ProductivityStats {
-  today_productive_hours: number;
-  focus_percentage: number;
-  total_sessions_today: number;
-  missed_checkins: number;
-  current_streak: number;
-  longest_streak: number;
-}
-
-export interface ProductivitySummary {
-  user_id: string;
-  period_days: number;
-  total_sessions_all_time: number;
-  mock: boolean;
-  note?: string;
-  stats: ProductivityStats;
-  generated_at: string;
 }
 
 // --- Error Handling ---

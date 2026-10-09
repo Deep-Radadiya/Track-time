@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { activitiesApi } from '@/api/activities'
-import type { ActivityListParams, ReminderActivity } from '@/types/api'
+import type { ActivityListParams, MissedReminder, ReminderActivity } from '@/types/api'
 
 export const ACTIVITIES_KEY = ['activities'] as const
 
@@ -10,6 +10,15 @@ export function useActivities(params: ActivityListParams = {}) {
     queryKey: [...ACTIVITIES_KEY, params],
     queryFn: () => activitiesApi.list(params),
     staleTime: 15_000,
+  })
+}
+
+export function useMissedReminders(params: { date?: string; task_id?: string } = {}) {
+  return useQuery<MissedReminder[]>({
+    queryKey: [...ACTIVITIES_KEY, 'missed', params],
+    queryFn: () => activitiesApi.missed(params),
+    staleTime: 15_000,
+    refetchInterval: 30_000, // a reminder becomes "missed" with time, with no event to tell us
   })
 }
 

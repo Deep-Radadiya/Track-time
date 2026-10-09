@@ -2,10 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { useWsStore } from '@/stores/wsStore'
-import { useSummaryStore } from '@/stores/summaryStore'
 import { TASKS_KEY } from './useTasks'
-import { ACTIVITIES_KEY } from './useActivities'
-import type { DaySummary } from '@/types/api'
 
 const API_URL = import.meta.env.VITE_API_URL as string ?? 'http://localhost:8000'
 const WS_URL = API_URL.replace(/^http/, 'ws')
@@ -35,7 +32,6 @@ function isTokenNearExpiry(token: string, bufferSeconds = 60): boolean {
 export function useWebSocket() {
   const { accessToken, isAuthenticated } = useAuthStore()
   const { setSocket, setStatus } = useWsStore()
-  const { setPendingSummary } = useSummaryStore()
   const queryClient = useQueryClient()
   const reconnectDelay = useRef(1000)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -65,17 +61,10 @@ export function useWebSocket() {
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data as string) as { event?: string; summary?: DaySummary }
+        const data = JSON.parse(event.data as string) as { event?: string }
 
         if (data.event && INVALIDATING_EVENTS.has(data.event)) {
           queryClient.invalidateQueries({ queryKey: TASKS_KEY })
-        }
-
-        // When the Celery worker publishes a summary_ready event via Redis
-        // pub/sub it lands here. Store it so SummaryPage can display the
-        // drawer without a round-trip API call.
-        if (data.event === 'summary_ready' && data.summary) {
-          setPendingSummary(data.summary as DaySummary)
         }
       } catch {
         // ignore non-JSON messages
@@ -110,7 +99,7 @@ export function useWebSocket() {
     ws.onerror = () => {
       if (socketRef.current === ws) ws.close()
     }
-  }, [queryClient, setSocket, setStatus, setPendingSummary])
+  }, [queryClient, setSocket, setStatus])
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) {
@@ -173,26 +162,4 @@ export function useWebSocket() {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [])
-
-  // Listen for messages from the Service Worker (e.g. checkin logged in background)
-  useEffect(() => {
-    const handleSwMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'CHECKIN_LOGGED') {
-        // Invalidate today's stats to refresh dashboard
-        queryClient.invalidateQueries({ queryKey: ['todayStats'] })
-        queryClient.invalidateQueries({ queryKey: TASKS_KEY })
-        queryClient.invalidateQueries({ queryKey: ACTIVITIES_KEY })
-      }
-    }
-    
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', handleSwMessage)
-    }
-    
-    return () => {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.removeEventListener('message', handleSwMessage)
-      }
-    }
-  }, [queryClient])
 }

@@ -9,7 +9,7 @@ import { ACTIVITIES_KEY } from '@/hooks/useActivities'
 import { useTasks } from '@/hooks/useTasks'
 import { UpdatesTable } from '@/components/activity/UpdatesTable'
 import { parseApiError } from '@/lib/utils'
-import type { ReminderActivity, Task } from '@/types/api'
+import type { MissedReminder, ReminderActivity, Task } from '@/types/api'
 
 type SessionStatus = 'productive' | 'average' | 'needs_improvement'
 const SESSION_STATUSES: { value: SessionStatus; label: string; icon: typeof Check; bg: string }[] = [
@@ -22,7 +22,10 @@ export default function TaskUpdatePage() {
   const { taskId } = useParams<{ taskId: string }>()
   // When opened from a reminder notification, the update is saved at the time that reminder was due.
   const [searchParams] = useSearchParams()
-  const reminderTime = searchParams.get('due')
+  const dueFromLink = searchParams.get('due')
+  // A missed reminder picked from the list below: the update is saved at that reminder's time.
+  const [forMissed, setForMissed] = useState<string | null>(null)
+  const reminderTime = forMissed ?? dueFromLink
   const { data: tasks = [], isLoading } = useTasks()
   const task = tasks.find((t: Task) => t.id === taskId)
   const [text, setText] = useState('')
@@ -39,8 +42,16 @@ export default function TaskUpdatePage() {
   }
   const cancelEdit = () => {
     setEditing(null)
+    setForMissed(null)
     setText('')
     setSessionStatus(null)
+  }
+  const addForMissed = (m: MissedReminder) => {
+    setEditing(null)
+    setText('')
+    setSessionStatus(null)
+    setForMissed(m.due_at)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const submit = useMutation({
@@ -51,6 +62,7 @@ export default function TaskUpdatePage() {
     onSuccess: () => {
       toast.success(editing ? 'Update changed' : 'Update saved')
       setEditing(null)
+      setForMissed(null)
       setText('')
       setSessionStatus(null)
       qc.invalidateQueries({ queryKey: ACTIVITIES_KEY })
@@ -80,9 +92,13 @@ export default function TaskUpdatePage() {
         >
           <div className="flex items-center justify-between gap-3">
             <label className="block text-sm font-semibold text-text-primary">
-              {editing ? `Editing the update from ${format(new Date(editing.timestamp), 'h:mm a')}` : 'What did you do since the last update?'}
+              {editing
+                ? `Editing the update from ${format(new Date(editing.timestamp), 'h:mm a')}`
+                : reminderTime && !Number.isNaN(new Date(reminderTime).getTime())
+                  ? `Add your update for the ${format(new Date(reminderTime), 'h:mm a')} reminder`
+                  : 'What did you do since the last update?'}
             </label>
-            {editing && (
+            {(editing || forMissed) && (
               <button type="button" onClick={cancelEdit} className="text-xs text-text-muted hover:text-text-primary flex items-center gap-1">
                 <X size={14} /> Cancel
               </button>
@@ -129,7 +145,7 @@ export default function TaskUpdatePage() {
         <p className="text-sm text-text-secondary">This reminder may have been deleted.</p>
       ) : null}
 
-      <UpdatesTable taskId={taskId} onEdit={startEdit} />
+      <UpdatesTable taskId={taskId} onEdit={startEdit} onAddMissed={addForMissed} />
     </div>
   )
 }
