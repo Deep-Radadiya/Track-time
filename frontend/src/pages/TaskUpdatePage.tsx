@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -35,12 +35,19 @@ export default function TaskUpdatePage() {
   // The update being edited. It is loaded into this form, so the icon and the description can both be changed.
   const [editing, setEditing] = useState<ReminderActivity | null>(null)
   const qc = useQueryClient()
+  const formRef = useRef<HTMLFormElement>(null)
+  const textRef = useRef<HTMLTextAreaElement>(null)
+  // The page scrolls inside <main>, not the window, so bring the form itself into view and put the cursor in it.
+  const showForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    textRef.current?.focus({ preventScroll: true })
+  }
 
   const startEdit = (a: ReminderActivity) => {
     setEditing(a)
     setText(String(a.metadata?.raw_text ?? a.optional_notes ?? ''))
     setSessionStatus((a.metadata?.session_status as SessionStatus | undefined) ?? null)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    showForm()
   }
   const cancelEdit = () => {
     setEditing(null)
@@ -53,7 +60,7 @@ export default function TaskUpdatePage() {
     setText('')
     setSessionStatus(null)
     setForMissed(m.due_at)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    showForm()
   }
 
   const submit = useMutation({
@@ -61,14 +68,22 @@ export default function TaskUpdatePage() {
       editing
         ? activitiesApi.update(editing.id, text.trim(), sessionStatus)
         : activitiesApi.submit({ text: text.trim(), source: 'text', task_id: taskId ?? null, session_status: sessionStatus, reminder_time: reminderTime }),
-    onSuccess: () => {
+    onSuccess: async (saved) => {
       toast.success(editing ? 'Update changed' : 'Update saved')
       if (!editing && !forMissed) setLinkUsed(true)
       setEditing(null)
       setForMissed(null)
       setText('')
       setSessionStatus(null)
-      qc.invalidateQueries({ queryKey: ACTIVITIES_KEY })
+      // Wait for the list to reload, then scroll to the saved update and flash it so it's easy to spot.
+      await qc.invalidateQueries({ queryKey: ACTIVITIES_KEY })
+      requestAnimationFrame(() => {
+        const row = document.getElementById(`update-${saved.id}`)
+        if (!row) return
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        row.classList.add('bg-primary/10')
+        setTimeout(() => row.classList.remove('bg-primary/10'), 2000)
+      })
     },
     onError: (err: unknown) => toast.error(parseApiError(err)),
   })
@@ -90,8 +105,9 @@ export default function TaskUpdatePage() {
 
       {task ? (
         <form
+          ref={formRef}
           onSubmit={(e) => { e.preventDefault(); if (canSubmit) submit.mutate() }}
-          className="glass-card p-4 space-y-3"
+          className="glass-card p-4 space-y-3 scroll-mt-24"
         >
           <div className="flex items-center justify-between gap-3">
             <label className="block text-sm font-semibold text-text-primary">
@@ -129,6 +145,7 @@ export default function TaskUpdatePage() {
             })}
           </div>
           <textarea
+            ref={textRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && canSubmit) submit.mutate() }}
