@@ -93,18 +93,3 @@ export async function sendToUser(userId, payload) {
   }
   return sent;
 }
-
-// The notification for the day-end summary. The text is put in the notification itself,
-// so the user can read it without opening the app.
-export function summaryPayload(summary) {
-  const parts = [];
-  if (summary.highlight) parts.push(`✨ ${summary.highlight}`);
-  if (summary.concern) parts.push(`⚠️ ${summary.concern}`);
-  return {
-    type: 'summary_ready',
-    tag: 'day-end-summary',
-    title: 'Day-End Summary',
-    body: parts.length ? parts.join(' • ') : summary.summary || 'Your day-end summary is ready.',
-    summary,
-  };
-}

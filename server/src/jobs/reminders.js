@@ -6,6 +6,7 @@ import { Task } from '../models/Task.js';
 import { User } from '../models/User.js';
 import { Device } from '../models/Device.js';
 import { NotificationLog } from '../models/NotificationLog.js';
+import { ReminderLog } from '../models/ReminderLog.js';
 import { sendPush, reminderPayload, GoneError } from '../push.js';
 import { broadcast } from '../websocket.js';
 import { quietHoursEnd, rollWindowForward, advanceRecurrence } from '../taskService.js';
@@ -51,6 +52,20 @@ async function sendReminder(task, now) {
     return;
   }
 
+  const dueAt = task.next_due_at || task.snoozed_until || task.due_at || now;
+
+  // Remember that this reminder was sent, so it can be shown as "Missed" if the user never answers it.
+  // A problem here must never stop the notification.
+  try {
+    await ReminderLog.updateOne(
+      { task_id: task._id, due_at: dueAt },
+      { $setOnInsert: { user_id: user._id, task_title: task.title } },
+      { upsert: true },
+    );
+  } catch (err) {
+    console.warn(`[Job] could not log reminder for ${task.id}: ${err.message}`);
+  }
+
   const devices = await Device.find({ user_id: user._id, push_enabled: true });
   if (devices.length === 0) {
     rollWindowForward(task, user, now);
@@ -59,7 +74,6 @@ async function sendReminder(task, now) {
     return;
   }
 
-  const dueAt = task.next_due_at || task.snoozed_until || task.due_at || now;
   const payload = reminderPayload(task, user._id, dueAt);
 
   for (const device of devices) {

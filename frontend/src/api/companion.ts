@@ -7,10 +7,6 @@ import {
   ChatRequest,
   CurrentTask,
   CurrentTaskSet,
-  HourlyCheckinReminder,
-  ProductivityLog,
-  ProductivityLogCreate,
-  ProductivitySummary,
 } from '../types/companion';
 
 /**
@@ -92,38 +88,6 @@ export const companionApi = {
   },
 
   /**
-   * Log a productivity check-in / focus session.
-   */
-  async createCheckin(data: ProductivityLogCreate, signal?: AbortSignal): Promise<ProductivityLog> {
-    return postRequest<ProductivityLog>('/companion/checkin', data, { signal });
-  },
-
-  async getCheckinReminders(today = true, limit = 50, status?: string, signal?: AbortSignal): Promise<HourlyCheckinReminder[]> {
-    const params: Record<string, any> = { today, limit };
-    if (status) {
-      params.status = status;
-    }
-    return getWithRetry<HourlyCheckinReminder[]>('/companion/checkin/reminders', {
-      params,
-      signal,
-    });
-  },
-
-  async getCheckinReminder(id: string, signal?: AbortSignal): Promise<HourlyCheckinReminder> {
-    return getWithRetry<HourlyCheckinReminder>(`/companion/checkin/reminders/${id}`, { signal });
-  },
-
-  /**
-   * List productivity check-in history.
-   */
-  async getCheckinHistory(skip = 0, limit = 50, signal?: AbortSignal): Promise<ProductivityLog[]> {
-    return getWithRetry<ProductivityLog[]>('/companion/checkin/history', {
-      params: { skip, limit },
-      signal,
-    });
-  },
-
-  /**
    * Get the user's current focus task.
    */
   async getCurrentTask(signal?: AbortSignal): Promise<CurrentTask> {
@@ -137,13 +101,4 @@ export const companionApi = {
     return postRequest<CurrentTask>('/companion/current-task', data, { signal });
   },
 
-  /**
-   * Get aggregated productivity stats.
-   */
-  async getProductivitySummary(days = 7, signal?: AbortSignal): Promise<ProductivitySummary> {
-    return getWithRetry<ProductivitySummary>('/companion/productivity/summary', {
-      params: { days },
-      signal,
-    });
-  },
 };

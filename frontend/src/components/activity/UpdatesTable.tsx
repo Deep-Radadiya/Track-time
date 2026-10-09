@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { Check, Ellipsis, Pencil, X } from 'lucide-react'
-import { useActivities, useUpdateActivity } from '@/hooks/useActivities'
+import { useNavigate } from 'react-router-dom'
+import { Check, Ellipsis, Pencil, Plus, X } from 'lucide-react'
+import { useActivities, useMissedReminders, useUpdateActivity } from '@/hooks/useActivities'
 import { useTasks } from '@/hooks/useTasks'
-import type { ReminderActivity, Task } from '@/types/api'
+import type { MissedReminder, ReminderActivity, Task } from '@/types/api'
 
 const SESSION_BADGE: Record<string, { label: string; icon: typeof Check; bg: string }> = {
   productive: { label: 'Productive', icon: Check, bg: 'bg-green-500' },
@@ -20,11 +21,17 @@ interface UpdatesTableProps {
   search?: string
   /** When given, the pencil hands the update to the page (to edit it in the form above) instead of editing in the row. */
   onEdit?: (update: ReminderActivity) => void
+  /** When given, "Add update" on a missed reminder hands it to the page. Otherwise it opens that reminder's update page. */
+  onAddMissed?: (missed: MissedReminder) => void
 }
 
+type Row = { kind: 'update'; time: number; a: ReminderActivity } | { kind: 'missed'; time: number; m: MissedReminder }
+
 /** Today's updates, grouped by task (one card per task, oldest first). */
-export function UpdatesTable({ taskId, date, search, onEdit }: UpdatesTableProps) {
+export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: UpdatesTableProps) {
+  const navigate = useNavigate()
   const { data: activities = [], isLoading, error } = useActivities(date ? { date, limit: 200 } : { today: true, limit: 200 })
+  const { data: missedAll = [] } = useMissedReminders({ ...(date && { date }), ...(taskId && { task_id: taskId }) })
   const { data: tasks = [] } = useTasks()
   const saveUpdate = useUpdateActivity()
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -42,7 +49,10 @@ export function UpdatesTable({ taskId, date, search, onEdit }: UpdatesTableProps
 
   const titleOf = (a: ReminderActivity) => (a.task_id && titles.get(a.task_id)) || a.task_title || 'Untitled'
 
-  const rows = activities
+  const addMissed = (m: MissedReminder) =>
+    onAddMissed ? onAddMissed(m) : navigate(`/update/${m.task_id}?due=${encodeURIComponent(m.due_at)}`)
+
+  const updateRows: Row[] = activities
     .filter((a: ReminderActivity) => a.metadata?.event === 'reminder_response')
     .filter((a: ReminderActivity) => !taskId || a.task_id === taskId)
     .filter((a: ReminderActivity) => {
@@ -51,17 +61,45 @@ export function UpdatesTable({ taskId, date, search, onEdit }: UpdatesTableProps
       const text = String(a.metadata?.raw_text ?? a.optional_notes ?? '')
       return text.toLowerCase().includes(q) || titleOf(a).toLowerCase().includes(q)
     })
-    .sort((a: ReminderActivity, b: ReminderActivity) => +new Date(a.timestamp) - +new Date(b.timestamp))
+    .map((a: ReminderActivity): Row => ({ kind: 'update', time: +new Date(a.timestamp), a }))
 
-  const groups = new Map<string, ReminderActivity[]>()
-  for (const a of rows) {
-    const key = a.task_id ?? titleOf(a)
-    groups.set(key, [...(groups.get(key) ?? []), a])
+  const q = search?.trim().toLowerCase()
+  const missedRows: Row[] = missedAll
+    .filter((m: MissedReminder) => !q || (titles.get(m.task_id) ?? m.task_title).toLowerCase().includes(q))
+    .map((m: MissedReminder): Row => ({ kind: 'missed', time: +new Date(m.due_at), m }))
+
+  const rows: Row[] = [...updateRows, ...missedRows].sort((x, y) => x.time - y.time)
+  const rowTaskId = (row: Row) => (row.kind === 'missed' ? row.m.task_id : row.a.task_id)
+  const rowTitle = (row: Row) => (row.kind === 'missed' ? titles.get(row.m.task_id) || row.m.task_title : titleOf(row.a))
+  const countUpdates = (list: Row[]) => list.filter((row) => row.kind === 'update').length
+
+  const groups = new Map<string, Row[]>()
+  for (const row of rows) {
+    const key = rowTaskId(row) ?? rowTitle(row)
+    groups.set(key, [...(groups.get(key) ?? []), row])
   }
 
-  const rowsView = (list: ReminderActivity[]) => (
+  const rowsView = (list: Row[]) => (
     <ul className="divide-y divide-ink/[0.06]">
-      {list.map((a, i) => (
+      {list.map((row, i) => {
+        if (row.kind === 'missed') {
+          const m = row.m
+          return (
+            <li key={`missed-${m.id}`} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+              <span className="w-5 shrink-0 text-text-muted">{i + 1}</span>
+              <span className="w-[4.5rem] shrink-0 whitespace-nowrap font-medium text-text-muted">
+                {format(new Date(m.due_at), 'h:mm a')}
+              </span>
+              <span className="rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">Missed</span>
+              <span className="flex-1" />
+              <button onClick={() => addMissed(m)} className="btn-ghost !min-h-0 py-1.5 px-3 text-xs flex items-center gap-1">
+                <Plus size={14} /> Add update
+              </button>
+            </li>
+          )
+        }
+        const a = row.a
+        return (
         <li key={a.id} className="flex gap-3 px-4 py-2.5 text-sm">
           <span className="w-5 shrink-0 text-text-muted">{i + 1}</span>
           <span className="w-[4.5rem] shrink-0 whitespace-nowrap font-medium text-text-primary">
@@ -113,7 +151,8 @@ export function UpdatesTable({ taskId, date, search, onEdit }: UpdatesTableProps
             </>
           )}
         </li>
-      ))}
+        )
+      })}
     </ul>
   )
 
@@ -133,7 +172,7 @@ export function UpdatesTable({ taskId, date, search, onEdit }: UpdatesTableProps
       <section className="glass-card overflow-hidden">
         <div className="px-4 py-3">
           <h2 className="text-sm font-semibold text-text-primary">Updates for this task today</h2>
-          <p className="text-xs text-text-muted mt-1">{rows.length} {rows.length === 1 ? 'update' : 'updates'}</p>
+          <p className="text-xs text-text-muted mt-1">{countUpdates(rows)} {countUpdates(rows) === 1 ? 'update' : 'updates'}</p>
         </div>
         <div className="border-t border-ink/[0.06]">{rowsView(rows)}</div>
       </section>
@@ -145,9 +184,9 @@ export function UpdatesTable({ taskId, date, search, onEdit }: UpdatesTableProps
       {[...groups.entries()].map(([key, list]) => (
         <section key={key} className="glass-card overflow-hidden">
           <div className="flex items-center justify-between gap-3 px-4 py-3 bg-primary/5">
-            <h2 className="text-sm font-semibold text-text-primary truncate">{titleOf(list[0])}</h2>
+            <h2 className="text-sm font-semibold text-text-primary truncate">{rowTitle(list[0])}</h2>
             <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-              {list.length} {list.length === 1 ? 'update' : 'updates'}
+              {countUpdates(list)} {countUpdates(list) === 1 ? 'update' : 'updates'}
             </span>
           </div>
           {rowsView(list)}

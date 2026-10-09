@@ -1,6 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { ThemeToggle } from './ThemeToggle'
@@ -10,10 +9,8 @@ import { NotificationPermission } from '@/components/notifications/NotificationP
 import { useDeviceStore } from '@/stores/deviceStore'
 import { devicesApi } from '@/api/devices'
 import { initServiceWorker } from '@/lib/sw-registration'
-import { HourlyReminderPanel } from '@/components/notifications/HourlyReminderPanel'
 import { TaskCreateModal } from '@/components/tasks/TaskCreateModal'
 
-import { useCheckinPanelStore } from '@/stores/checkinPanelStore'
 
 const PING_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -25,37 +22,22 @@ export function Layout({ children }: LayoutProps) {
   useWebSocket()
   const { deviceId } = useDeviceStore()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { isOpen: isHourlyReminderOpen, reminderId, open: openCheckin, close: closeCheckin } = useCheckinPanelStore()
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
 
   // Handle URL params for notification-driven panels.
   useEffect(() => {
-    const shouldOpenCheckin = searchParams.get('checkin') === '1'
-    const newReminderId = searchParams.get('reminderId') ?? undefined
-    const shouldOpenAddTask = searchParams.get('addTask') === '1'
-
-    if (shouldOpenCheckin || newReminderId) {
-      openCheckin(newReminderId)
-    }
-    if (shouldOpenAddTask) {
+    if (searchParams.get('addTask') === '1') {
       setIsCreateTaskOpen(true)
-    }
-    if (shouldOpenCheckin || newReminderId || shouldOpenAddTask) {
       setSearchParams((prev) => {
-        prev.delete('checkin')
-        prev.delete('reminderId')
         prev.delete('addTask')
         return prev
       }, { replace: true })
     }
   }, [searchParams, setSearchParams])
 
-  // Handle SW messages for check-in panel
+  // Handle SW messages
   useEffect(() => {
     const handleSwMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'OPEN_CHECKIN_PANEL') {
-        openCheckin(event.data.reminderId ?? undefined)
-      }
       if (event.data && event.data.type === 'OPEN_ADD_TASK_MODAL') {
         setIsCreateTaskOpen(true)
       }
@@ -122,14 +104,6 @@ export function Layout({ children }: LayoutProps) {
       <BottomNav />
 
       {/* Global Modals/Overlays */}
-      <AnimatePresence>
-        {isHourlyReminderOpen && (
-          <HourlyReminderPanel
-            onClose={() => closeCheckin()}
-            reminderId={reminderId}
-          />
-        )}
-      </AnimatePresence>
       <TaskCreateModal open={isCreateTaskOpen} onClose={() => setIsCreateTaskOpen(false)} />
     </div>
   )

@@ -8,7 +8,6 @@ import taskRoutes from './routes/tasks.js';
 import voiceRoutes from './routes/voice.js';
 import deviceRoutes from './routes/devices.js';
 import activityRoutes from './routes/activities.js';
-import summaryRoutes from './routes/summary.js';
 import companionRoutes from './routes/companion.js';
 
 const app = express();
@@ -23,7 +22,6 @@ app.use('/tasks', voiceRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/devices', deviceRoutes);
 app.use('/activities', activityRoutes);
-app.use('/summary', summaryRoutes);
 app.use('/companion', companionRoutes);
 
 // Any error not handled above ends up here, so the server never crashes on one bad request.

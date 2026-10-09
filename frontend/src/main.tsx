@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import App from './App'
 import { idbGetToken, idbClearToken, useAuthStore } from './stores/authStore'
-import { useSummaryStore } from './stores/summaryStore'
 import { authApi } from './api/auth'
 import './index.css'
 
@@ -17,19 +16,6 @@ const queryClient = new QueryClient({
     },
   },
 })
-
-// Listen for messages from the service worker (e.g. summary_ready push clicks)
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (event.data?.type === 'SUMMARY_READY' && event.data.summary) {
-      useSummaryStore.getState().setPendingSummary(event.data.summary)
-    }
-
-    if (event.data?.type === 'CHECKIN_LOGGED') {
-      queryClient.invalidateQueries({ queryKey: ['checkinReminders'] })
-    }
-  })
-}
 
 // Initialize auth from IndexedDB before rendering so ProtectedRoute doesn't flicker
 async function initApp() {

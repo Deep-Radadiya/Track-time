@@ -95,43 +95,6 @@ self.addEventListener('push', (event) => {
       )
     }
 
-    if (data.type === 'summary_ready') {
-      const options = {
-        body: data.body,
-        tag: data.tag,
-        icon: '/icon-192.png',
-        badge: '/badge-96.png',
-        requireInteraction: false,
-        data: { summary: data.summary, url: '/summary' },
-      }
-      event.waitUntil(
-        self.registration.showNotification(data.title, options)
-      )
-    }
-
-    if (data.type === 'checkin') {
-      const options = {
-        body: 'What are you working on right now?',
-        tag: data.tag,
-        icon: '/icon-192.png',
-        badge: '/badge-96.png',
-        actions: [
-          { action: 'productive', title: 'Productive' },
-          { action: 'not_productive', title: 'Not productive' },
-          { action: 'add_task', title: 'Add task' },
-        ],
-        requireInteraction: false,
-        renotify: true,
-        data: {
-          action_token: data.action_token,
-          reminder_id: data.reminder_id,
-        },
-      }
-      console.log('[SW] showing checkin notification', { reminder_id: data.reminder_id })
-      event.waitUntil(
-        self.registration.showNotification('Hourly Reminder', options)
-      )
-    }
   } catch (err) {
     console.error('Error handling background push notification:', err)
   }
@@ -140,29 +103,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   console.log('[SW] notificationclick', { action: event.action, data: event.notification.data })
-  const { task_id, due_at, action_token, summary, url } = event.notification.data || {}
-
-  // If this is the summary notification, open the summary page.
-  if (url === '/summary') {
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then((clientList) => {
-        // Find an open dashboard/app tab
-        for (const client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            // We use postMessage to pass the summary payload to the running app.
-            client.postMessage({ type: 'SUMMARY_READY', summary })
-            return client.focus().then((c) => c.navigate('/summary'))
-          }
-        }
-        // No open tabs, open a new one to the summary page. The app will fetch the latest
-        // summary if the store is empty, or the push was missed, which is fine.
-        if (clients.openWindow) {
-          return clients.openWindow('/summary')
-        }
-      })
-    )
-    return
-  }
+  const { task_id, due_at, action_token } = event.notification.data || {}
 
   // Handle in-notification action buttons for reminders
   // Where the server is. The page registers this file as /sw.js?api=https://your-server,
@@ -192,71 +133,16 @@ self.addEventListener('notificationclick', (event) => {
         }),
       })
     )
-  } else if (['productive', 'average', 'not_productive'].includes(event.action)) {
-    const statusMap = {
-      'productive': 'focused',
-      'average': 'idle',
-      'not_productive': 'distracted'
-    }
-    event.waitUntil(
-      fetchWithAuth(`${apiBaseUrl}/companion/checkin`, {
-        method: 'POST',
-        actionToken: action_token,
-        body: JSON.stringify({
-          status: statusMap[event.action],
-          start_at: new Date(Date.now() - 3600000).toISOString(),
-          end_at: new Date().toISOString(),
-          reminder_id: event.notification.data?.reminder_id,
-        }),
-      }).then(() => {
-        // Broadcast to any open windows to refresh the UI
-        return clients.matchAll({ type: 'window' }).then((clientList) => {
-          for (const client of clientList) {
-            client.postMessage({ type: 'CHECKIN_LOGGED' })
-          }
-        })
-      })
-    )
-  } else if (event.action === 'add_task') {
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then((clientList) => {
-        for (const client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            client.postMessage({ type: 'OPEN_ADD_TASK_MODAL' })
-            return client.focus().then((c) => c.navigate('/dashboard?addTask=1'))
-          }
-        }
-        if (clients.openWindow) {
-          return clients.openWindow('/dashboard?addTask=1')
-        }
-      })
-    )
-  } else if (event.action === 'remind_later') {
-    event.waitUntil(
-      fetchWithAuth(`${apiBaseUrl}/companion/checkin/reschedule`, {
-        method: 'POST',
-        actionToken: action_token,
-      })
-    )
   } else {
-    // Clicking the notification body (not an action button):
-    // - For check-in notifications → open the app and signal voice check-in panel.
-    // - For everything else → just focus/open the dashboard.
-    const isCheckin = event.notification.tag === 'hourly-checkin'
-    const reminderId = event.notification.data?.reminder_id
-    const targetUrl = isCheckin
-      ? `/dashboard?checkin=1${reminderId ? `&reminderId=${reminderId}` : ''}`
-      : task_id
-        ? `/update/${task_id}${due_at ? `?due=${encodeURIComponent(due_at)}` : ''}`
-        : '/dashboard'
+    // Clicking the notification body (not an action button): open that reminder's update page.
+    const targetUrl = task_id
+      ? `/update/${task_id}${due_at ? `?due=${encodeURIComponent(due_at)}` : ''}`
+      : '/dashboard'
 
     event.waitUntil(
       clients.matchAll({ type: 'window' }).then((clientList) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
-            if (isCheckin) {
-              client.postMessage({ type: 'OPEN_CHECKIN_PANEL', reminderId })
-            }
             return client.focus().then((c) => c.navigate(targetUrl))
           }
         }

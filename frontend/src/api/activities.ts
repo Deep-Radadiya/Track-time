@@ -1,9 +1,12 @@
 import api from './axios'
-import type { ActivityListParams, ActivitySubmitRequest, ReminderActivity } from '@/types/api'
+import type { ActivityListParams, ActivitySubmitRequest, MissedReminder, ReminderActivity } from '@/types/api'
 
 export const activitiesApi = {
   list: (params: ActivityListParams = {}): Promise<ReminderActivity[]> =>
     api.get<ReminderActivity[]>('/activities', { params }).then((r) => r.data),
+
+  missed: (params: { date?: string; task_id?: string } = {}): Promise<MissedReminder[]> =>
+    api.get<MissedReminder[]>('/activities/missed', { params }).then((r) => r.data),
 
   submit: (data: ActivitySubmitRequest): Promise<ReminderActivity> =>
     api.post<ReminderActivity>('/activities/submit', data).then((r) => r.data),

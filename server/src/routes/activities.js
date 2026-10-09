@@ -3,6 +3,7 @@ import { Router } from 'express';
 import mongoose from 'mongoose';
 import { Activity, ACTIVITY_TYPES, ACTIVITY_SOURCES } from '../models/Activity.js';
 import { Task } from '../models/Task.js';
+import { ReminderLog } from '../models/ReminderLog.js';
 import { requireLogin } from '../auth.js';
 import { extractIntent } from '../intent.js';
 import { recordActivity, localDateString, dayBounds } from '../activityService.js';
@@ -32,6 +33,49 @@ router.get('/', async (req, res) => {
   if (source) filter.source = source;
 
   res.json(await Activity.find(filter).sort({ timestamp: -1 }).limit(limit));
+});
+
+// Reminders that were sent but never answered: ?date=2026-10-02  ?task_id=...
+// A reminder counts as missed once the next one is due (or the next one has already been sent).
+router.get('/missed', async (req, res) => {
+  const { date, task_id } = req.query;
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return bad(res, 'date must look like 2026-10-02');
+  if (task_id && !mongoose.isValidObjectId(task_id)) return res.json([]);
+
+  const { start, end } = dayBounds(date || localDateString(req.user.timezone), req.user.timezone);
+  const filter = { user_id: req.user._id, due_at: { $gte: start, $lt: end } };
+  if (task_id) filter.task_id = task_id;
+  const logs = await ReminderLog.find(filter).sort({ due_at: 1 });
+  if (logs.length === 0) return res.json([]);
+
+  // Which reminders already have an update written for them.
+  const answered = new Set(
+    (await Activity.find({
+      user_id: req.user._id,
+      'metadata.event': 'reminder_response',
+      'metadata.reminder_at': { $in: logs.map((l) => l.due_at.toISOString()) },
+    }).select('metadata.reminder_at').lean()).map((a) => a.metadata.reminder_at),
+  );
+
+  // Deleted reminders are left out.
+  const tasks = await Task.find({ _id: { $in: [...new Set(logs.map((l) => String(l.task_id)))] } }).select('title interval_minutes').lean();
+  const taskById = new Map(tasks.map((t) => [String(t._id), t]));
+
+  const lastSent = new Map(); // task id -> its latest reminder in this day
+  for (const l of logs) lastSent.set(String(l.task_id), l.due_at.getTime());
+
+  const now = Date.now();
+  res.json(
+    logs
+      .filter((l) => {
+        const task = taskById.get(String(l.task_id));
+        if (!task || answered.has(l.due_at.toISOString())) return false;
+        const nextSent = lastSent.get(String(l.task_id)) > l.due_at.getTime();
+        const nextDue = now >= l.due_at.getTime() + (task.interval_minutes || 30) * 60000;
+        return nextSent || nextDue;
+      })
+      .map((l) => ({ id: String(l._id), task_id: String(l.task_id), task_title: taskById.get(String(l.task_id)).title, due_at: l.due_at })),
+  );
 });
 
 // The user writes (or speaks) an update like "Blocked because Docker won't start".
@@ -71,7 +115,8 @@ router.post('/submit', async (req, res) => {
     notes: intent.optional_notes,
     source,
     timestamp,
-    metadata: { event: 'reminder_response', raw_text: text, ...(session_status && { session_status }) },
+    // reminder_at links the update to the reminder it answers, so that reminder is no longer "missed".
+    metadata: { event: 'reminder_response', raw_text: text, ...(timestamp && { reminder_at: timestamp.toISOString() }), ...(session_status && { session_status }) },
   });
   res.status(201).json(activity);
 });
