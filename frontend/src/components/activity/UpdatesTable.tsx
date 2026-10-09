@@ -115,7 +115,7 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
         }
         const a = row.a
         return (
-        <li key={a.id} className="flex gap-3 px-4 py-2.5 text-sm">
+        <li key={a.id} id={`update-${a.id}`} className="flex gap-3 px-4 py-2.5 text-sm transition-colors duration-700">
           <span className="w-5 shrink-0 text-text-muted">{i + 1}</span>
           <span className="w-[4.5rem] shrink-0 whitespace-nowrap font-medium text-text-primary">
             {format(new Date(a.timestamp), 'h:mm a')}
