@@ -1,4 +1,4 @@
-// Routes: /companion/chat, /companion/current-task, /companion/checkin..., /companion/productivity/summary
+// Routes: /companion/chat, /companion/chat/history, /companion/current-task
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import { requireLogin } from '../auth.js';

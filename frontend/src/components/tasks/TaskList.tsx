@@ -3,6 +3,7 @@ import type { Task } from '@/types/api'
 import { TaskCard } from './TaskCard'
 import { AlertCircle, ArrowUpRight } from 'lucide-react'
 import { TaskCreateModal } from './TaskCreateModal'
+import { isReminderOn } from '@/lib/utils'
 
 interface TaskListProps {
   tasks: Task[]
@@ -12,8 +13,7 @@ export function TaskList({ tasks }: TaskListProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   // Reminders that are ON first, paused (OFF) ones last.
-  const isOn = (t: Task) => ['pending', 'in_progress', 'snoozed'].includes(t.status)
-  const sorted = [...tasks.filter(isOn), ...tasks.filter((t) => !isOn(t))]
+  const sorted = [...tasks.filter(isReminderOn), ...tasks.filter((t) => !isReminderOn(t))]
 
   const totalCount = tasks.length
   if (totalCount === 0) {

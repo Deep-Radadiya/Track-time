@@ -20,13 +20,19 @@ export function toSeconds(time) {
   return h * 3600 + m * 60 + s;
 }
 
-// How far ahead of UTC a time zone is at a given moment, in milliseconds.
-function offsetMs(date, timeZone) {
+// The clock reading a moment has in a time zone, as numbers: { year, month, day, hour, minute, second }.
+// Both helpers below need it, so it lives in one place.
+function zonedParts(date, timeZone) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   }).formatToParts(date);
-  const v = Object.fromEntries(parts.map((p) => [p.type, +p.value]));
+  return Object.fromEntries(parts.map((p) => [p.type, +p.value]));
+}
+
+// How far ahead of UTC a time zone is at a given moment, in milliseconds.
+function offsetMs(date, timeZone) {
+  const v = zonedParts(date, timeZone);
   const localAsUtc = Date.UTC(v.year, v.month - 1, v.day, v.hour, v.minute, v.second);
   return localAsUtc - Math.floor(date.getTime() / 1000) * 1000;
 }
@@ -39,6 +45,7 @@ export function localToUtc(year, month, day, seconds, timeZone) {
   return new Date(utc);
 }
 
+// Returns the time zone name if the computer knows it, otherwise 'UTC' (so a bad value never crashes us).
 export function validZone(name) {
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: name });
@@ -50,11 +57,7 @@ export function validZone(name) {
 
 // The date and time of day a moment has in a time zone: { year, month, day, seconds }.
 export function localNow(date, timeZone) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  }).formatToParts(date);
-  const v = Object.fromEntries(parts.map((p) => [p.type, +p.value]));
+  const v = zonedParts(date, timeZone);
   return { year: v.year, month: v.month, day: v.day, seconds: v.hour * 3600 + v.minute * 60 + v.second };
 }
 

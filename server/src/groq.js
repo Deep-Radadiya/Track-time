@@ -1,4 +1,4 @@
-// The one place that talks to the AI (Groq). Voice, summaries and chat all use it.
+// The one place that talks to the AI (Groq). Voice parsing and the chat both use it.
 import { config } from './config.js';
 
 export class NotConfigured extends Error {}

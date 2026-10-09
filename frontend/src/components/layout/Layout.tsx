@@ -11,13 +11,14 @@ import { devicesApi } from '@/api/devices'
 import { initServiceWorker } from '@/lib/sw-registration'
 import { TaskCreateModal } from '@/components/tasks/TaskCreateModal'
 
-
 const PING_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 
 interface LayoutProps {
   children: ReactNode
 }
 
+// The frame around every logged-in page: sidebar (desktop), bottom bar (phone), and the
+// background work that should run on any page (live updates, push setup, device ping).
 export function Layout({ children }: LayoutProps) {
   useWebSocket()
   const { deviceId } = useDeviceStore()
@@ -63,7 +64,7 @@ export function Layout({ children }: LayoutProps) {
 
   // Auto-ping the registered device every 5 minutes while the app is open.
   // This keeps `last_active_at` fresh so the backend can target the active
-  // device for notifications (and prune stale subscriptions via GoneException).
+  // device for notifications (and delete subscriptions the browser has dropped).
   useEffect(() => {
     if (!deviceId) return
 

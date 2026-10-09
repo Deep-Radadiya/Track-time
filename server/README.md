@@ -29,7 +29,7 @@ scheduler.js  ->  jobs/   (every minute: what is due? send a push notification)
 2. Routes read and write MongoDB through the **models** in `src/models/`.
 3. The reminder rules (when does it fire next, what does "done" or "snooze" do) are in `src/taskService.js`.
 4. A **scheduler** (`src/scheduler.js`) runs inside the same program:
-   every minute it sends due reminders and check-ins, and every hour it writes the 9 PM summaries.
+   every minute it sends the reminders that are due (`src/jobs/reminders.js`).
 
 ## Folder map
 
@@ -39,17 +39,16 @@ scheduler.js  ->  jobs/   (every minute: what is due? send a push notification)
 | `src/app.js` | Builds the Express app and plugs in the routes |
 | `src/config.js` | Reads `.env` |
 | `src/auth.js` | Passwords, login tokens, and the "must be logged in" check |
-| `src/routes/` | One file per area: auth, tasks, devices, activities, summary, voice, companion |
+| `src/routes/` | One file per area: auth, tasks, devices, activities, voice, companion |
 | `src/models/` | What gets saved in MongoDB |
 | `src/taskService.js` | Reminder logic: time windows, repeats, snooze, quiet hours |
 | `src/activityService.js`, `src/intent.js` | The activity log, and reading "Blocked because ..." sentences |
 | `src/push.js` | Sends Web Push notifications |
 | `src/websocket.js` | Live updates: open tabs refresh by themselves |
 | `src/groq.js` | The one place that talks to the AI (Groq) |
-| `src/summaryService.js`, `src/voiceService.js` | Daily summary and voice-to-reminder |
+| `src/voiceService.js` | Voice-to-reminder (the AI turns a sentence into a draft reminder) |
 | `src/companion/` | The AI chat (Aria): context, prompt, parseIntent, actions, chat |
-| `src/checkinService.js` | When is an hourly check-in due |
-| `src/scheduler.js`, `src/jobs/` | The timers and what they do |
+| `src/scheduler.js`, `src/jobs/` | The timer and the job it runs |
 
 ## Settings (`.env`)
 
@@ -59,7 +58,8 @@ scheduler.js  ->  jobs/   (every minute: what is due? send a push notification)
 | `JWT_SECRET_KEY` | Signs logins. Use a long random value. |
 | `CORS_ORIGINS` | Website addresses allowed to call the server, comma separated |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_CLAIMS_SUB` | Web Push. The website needs the same public key. `VAPID_CLAIMS_SUB` must be `mailto:` plus a real email. |
-| `GROQ_API_KEY` | AI chat, voice and summaries (optional; the rest works without it) |
+| `GROQ_API_KEY` | AI chat and voice (optional; the rest works without it) |
+| `GROQ_MODEL` | Which Groq model to use (default `llama-3.3-70b-versatile`) |
 | `PORT` | Port to listen on (default 8000; hosts set this for you) |
 | `DISABLE_SCHEDULER=1` | Turns the timers off (useful for tests) |
 

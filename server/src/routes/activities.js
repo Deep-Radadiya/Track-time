@@ -103,9 +103,8 @@ router.post('/submit', async (req, res) => {
   if (task_id && mongoose.isValidObjectId(task_id)) {
     const task = await Task.findOne({ _id: task_id, user_id: req.user._id });
     taskId = task ? task._id : null;
-    // No reminder time sent: use the time of the reminder that was last sent for this task.
-    if (!timestamp && task?.last_reminded_at && task.last_reminded_at <= new Date()) timestamp = task.last_reminded_at;
   }
+  // No reminder time sent: it's a manual update, saved at the current time and not linked to a reminder.
 
   const activity = await recordActivity({
     userId: req.user._id,

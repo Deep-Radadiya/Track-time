@@ -17,11 +17,10 @@ export function speakText(text: string, rate = 1, pitch = 1): void {
   utterance.rate = rate
   utterance.pitch = pitch
   utterance.lang = 'en-US'
-  // Prefer a natural-sounding English voice if available
+  // Prefer an English voice installed on the device, otherwise any English voice
   const voices = window.speechSynthesis.getVoices()
-  const preferred = voices.find(
-    (v) => v.lang.startsWith('en') && !v.localService === false,
-  ) ?? voices.find((v) => v.lang.startsWith('en'))
+  const preferred = voices.find((v) => v.lang.startsWith('en') && v.localService)
+    ?? voices.find((v) => v.lang.startsWith('en'))
   if (preferred) utterance.voice = preferred
   window.speechSynthesis.speak(utterance)
 }
@@ -32,6 +31,8 @@ export function cancelSpeech(): void {
 
 // ── useVoiceInput hook ────────────────────────────────────────────────────
 
+// Speech-to-text with the browser's built-in SpeechRecognition (Chrome, Edge, Safari).
+// `transcript` holds the finished sentences; `interimTranscript` is the part still being heard.
 export function useVoiceInput() {
   const [isSupported] = useState(() =>
     typeof window !== 'undefined' &&

@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, /* CheckSquare, */ /* Mic, BarChart2, */ ClipboardList, Settings, LogOut, Wifi, WifiOff, Loader2, Bell
+  LayoutDashboard, ClipboardList, Settings, LogOut, Wifi, WifiOff, Loader2, Bell
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useWsStore } from '@/stores/wsStore'
@@ -9,12 +9,10 @@ import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from './ThemeToggle'
 
+// /tasks and /voice still work (see App.tsx) but are not shown in the menu.
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  // { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
-  // { to: '/voice', icon: Mic, label: 'Voice Input' },
   { to: '/updates', icon: ClipboardList, label: 'Updates' },
-  // { to: '/summary', icon: BarChart2, label: 'Summary' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 

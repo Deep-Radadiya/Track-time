@@ -10,9 +10,11 @@ import {
 
 const router = Router();
 
-const tokensFor = (user) => ({
-  access_token: createAccessToken(user._id),
-  refresh_token: createRefreshToken(user._id),
+// The pair of tokens the app gets after signup, login and refresh.
+// The short one (access) is sent with every request; the long one (refresh) gets a new pair later.
+const tokensFor = (userId) => ({
+  access_token: createAccessToken(userId),
+  refresh_token: createRefreshToken(userId),
   token_type: 'bearer',
 });
 
@@ -34,7 +36,7 @@ router.post('/signup', async (req, res) => {
     hashed_password: await hashPassword(password),
     timezone: timezone || 'UTC',
   });
-  res.status(201).json(tokensFor(user));
+  res.status(201).json(tokensFor(user._id));
 });
 
 router.post('/login', async (req, res) => {
@@ -43,7 +45,7 @@ router.post('/login', async (req, res) => {
   if (!user || !(await checkPassword(password || '', user.hashed_password))) {
     return res.status(401).json({ detail: 'Invalid email or password' });
   }
-  res.json(tokensFor(user));
+  res.json(tokensFor(user._id));
 });
 
 router.post('/refresh', async (req, res) => {
@@ -57,11 +59,7 @@ router.post('/refresh', async (req, res) => {
     const data = readToken(refresh_token);
     if (data.type !== 'refresh') throw new Error('not a refresh token');
     await revoke(refresh_token); // each refresh token works only once
-    res.json({
-      access_token: createAccessToken(data.sub),
-      refresh_token: createRefreshToken(data.sub),
-      token_type: 'bearer',
-    });
+    res.json(tokensFor(data.sub));
   } catch {
     res.status(401).json({ detail: 'Invalid refresh token' });
   }
