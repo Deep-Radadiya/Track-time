@@ -39,9 +39,7 @@ export function ParsedTaskPreview({ result, onClose }: ParsedTaskPreviewProps) {
     if (hasAmbiguous) {
       speakText('Please review the highlighted fields before saving.')
     }
-    return () => {
-      // Do not cancel speech here — VoicePanel's onClose handler does that.
-    }
+    // No cleanup on purpose: VoicePanel's onClose stops the speech.
   }, [result.tasks])
 
   const {

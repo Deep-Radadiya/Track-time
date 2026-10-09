@@ -1,13 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, /* CheckSquare, */ /* Mic, BarChart2, */ ClipboardList, Settings } from 'lucide-react'
+import { LayoutDashboard, ClipboardList, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+// /tasks and /voice still work (see App.tsx) but are not shown in the menu.
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
-  // { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
-  // { to: '/voice', icon: Mic, label: 'Voice' },
   { to: '/updates', icon: ClipboardList, label: 'Updates' },
-  // { to: '/summary', icon: BarChart2, label: 'Summary' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 

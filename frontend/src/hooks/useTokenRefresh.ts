@@ -1,19 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { refreshAccessToken } from '@/api/axios'
-
-/**
- * Decode a JWT payload (without verifying the signature) to read the `exp` claim.
- * Returns the expiry time in seconds since epoch, or 0 on failure.
- */
-function getTokenExpiry(token: string): number {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return typeof payload.exp === 'number' ? payload.exp : 0
-  } catch {
-    return 0
-  }
-}
+import { getTokenExpiry } from '@/lib/utils'
 
 /**
  * How many seconds before token expiry should we proactively refresh.

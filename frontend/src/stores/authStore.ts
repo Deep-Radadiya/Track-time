@@ -15,6 +15,8 @@ const IDB_STORE = 'auth'
 const IDB_VERSION = 1
 
 // ── IndexedDB helpers ──────────────────────────────────────────────────────
+// The token is saved under the key 'access_token' in the 'auth' store.
+// public/sw.js reads the same place, so keep these names in sync with it.
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -40,7 +42,7 @@ export async function idbSetToken(token: string): Promise<void> {
       tx.onerror = () => reject(tx.error)
     })
   } catch {
-    // Silently fail — IDB not critical for main-thread auth
+    // Ignore: the app keeps the token in memory too, so it still works without IndexedDB
   }
 }
 
@@ -68,7 +70,7 @@ export async function idbClearToken(): Promise<void> {
       tx.onerror = () => reject(tx.error)
     })
   } catch {
-    // Silently fail
+    // Ignore: nothing to clear if IndexedDB is not available
   }
 }
 
@@ -79,12 +81,13 @@ interface AuthState {
   user: User | null
   isAuthenticated: boolean
 
+  // Logged in: save the token and the user.
   setAuth: (accessToken: string, user: User) => void
+  // A new token (after login or a refresh). The user stays the same.
   setAccessToken: (accessToken: string) => void
-
-  // NEW: Update only the user object without affecting auth state.
+  // The user changed (e.g. settings saved). Login state stays the same.
   setUser: (user: User) => void
-
+  // Logged out: forget everything.
   clearAuth: () => void
 }
 
@@ -103,7 +106,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ accessToken, isAuthenticated: true })
   },
 
-  // NEW
   setUser: (user) => {
     set({ user })
   },

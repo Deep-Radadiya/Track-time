@@ -1,34 +1,27 @@
-# Donezo Frontend SPA
+# Donezo website
 
-A high-performance, premium client-side SPA built with React 18, TypeScript, and Vite.
+The React + TypeScript + Vite frontend. The full guide (features, setup, environment variables)
+is in the [root README](../README.md).
 
-## Features
-- **Modern Obsidian Theme**: Deep obsidian background with electric indigo and cyan accents.
-- **Task Management Dashboard**: Interactive kanban-style grouping with in-line status toggle, snooze popover, and recurrence support.
-- **AI Voice Transcription**: Speech-to-text transcript parser with editable preview card and ambiguous field highlighting.
-- **End-of-day Summary Drawer**: Encapsulated Groq analysis detailing highlight, concern, and tomorrow's plans.
-- **Web Push Notifications**: Automatic service worker registration using standard VAPID authentication keys.
-- **WebSockets Live Sync**: Real-time multi-tab state sync on events.
-- **Single-use JWT Refresh Token rotation**: Secure memory-based access token management.
+## Quick start
 
----
-
-## Setup & Local Dev
-
-### 1. Install Dependencies
 ```bash
 npm install
+cp .env.example .env.local   # set VITE_API_URL and VITE_VAPID_PUBLIC_KEY
+npm run dev                  # starts ../server too; open http://localhost:5173
 ```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env.local`:
-```bash
-cp .env.example .env.local
-```
-Ensure `VITE_API_URL` points to your backend instance (default: `http://localhost:8000`), and input your `VITE_VAPID_PUBLIC_KEY` values.
+Use `npm run dev:web` to start only the website, `npm run build` to type-check and build,
+and `npm run lint` to check the code.
 
-### 3. Launch Development Server
-```bash
-npm run dev
-```
-Open `http://localhost:5173` to interact with the app.
+## Where things are
+
+| Folder | What it holds |
+|---|---|
+| `src/pages/` | One component per page. Routes are listed in `src/App.tsx`. |
+| `src/components/` | UI pieces. `tasks/ReminderForm.tsx` is the form shared by the create and edit popups. |
+| `src/hooks/` | Data and app logic: `useTasks`, `useActivities`, `useAuth`, `useWebSocket`, `useTokenRefresh` |
+| `src/api/` | Calls to the server. `axios.ts` adds the login token and refreshes it on a 401. |
+| `src/stores/` | Small global state with Zustand (login, device id, WebSocket status) |
+| `src/lib/` | Helpers, and `sw-registration.ts` which turns on push notifications |
+| `public/sw.js` | Service worker: shows notifications and handles the Done / Snooze buttons |

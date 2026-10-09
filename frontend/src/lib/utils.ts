@@ -1,11 +1,14 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { format, formatDistanceToNow, isToday, isTomorrow, parseISO } from 'date-fns'
+import { format, isToday, isTomorrow, parseISO } from 'date-fns'
+import type { Task } from '@/types/api'
 
+// Joins Tailwind class names and drops the ones that clash, e.g. cn('p-2', isBig && 'p-4').
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// "Today 3:30 PM", "Tomorrow 9:00 AM", or a full date for anything later.
 export function formatDueDate(dateStr: string | null): string {
   if (!dateStr) return ''
   try {
@@ -19,30 +22,12 @@ export function formatDueDate(dateStr: string | null): string {
   }
 }
 
-export function formatRelative(dateStr: string): string {
-  try {
-    return formatDistanceToNow(parseISO(dateStr), { addSuffix: true })
-  } catch {
-    return dateStr
-  }
+// ON = the server still sends this reminder. OFF (done or blocked) = paused.
+export function isReminderOn(task: Task): boolean {
+  return ['pending', 'in_progress', 'snoozed'].includes(task.status)
 }
 
-export function formatTime(dateStr: string): string {
-  try {
-    return format(parseISO(dateStr), 'h:mm a')
-  } catch {
-    return dateStr
-  }
-}
-
-export function formatDate(dateStr: string): string {
-  try {
-    return format(parseISO(dateStr), 'MMM d, yyyy')
-  } catch {
-    return dateStr
-  }
-}
-
+// Turns any API error into one readable sentence for a toast.
 export function parseApiError(error: unknown): string {
   if (!error) return 'An unexpected error occurred'
   const err = error as { response?: { data?: { detail?: unknown } }; message?: string }
@@ -54,10 +39,15 @@ export function parseApiError(error: unknown): string {
   return err?.message ?? 'An unexpected error occurred'
 }
 
-export const TIMEZONES = [
-  'UTC', 'America/New_York', 'America/Chicago', 'America/Denver',
-  'America/Los_Angeles', 'America/Anchorage', 'Pacific/Honolulu',
-  'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Moscow',
-  'Asia/Dubai', 'Asia/Kolkata', 'Asia/Shanghai', 'Asia/Tokyo',
-  'Asia/Singapore', 'Australia/Sydney', 'Pacific/Auckland',
-]
+/**
+ * Reads when a login token (JWT) expires, without checking its signature.
+ * Returns seconds since 1970, or 0 when the token cannot be read.
+ */
+export function getTokenExpiry(token: string): number {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return typeof payload.exp === 'number' ? payload.exp : 0
+  } catch {
+    return 0
+  }
+}

@@ -1,11 +1,17 @@
 // Step 5 of the chat: read the AI's answer safely. It NEVER throws.
 // Whatever the AI sends, we get back a clean object with a default for every field.
+import { PRODUCTIVITY_STATUSES } from '../models/ProductivityLog.js';
 
 export const KNOWN_ACTIONS = [
   'chat_only', 'set_current_task', 'complete_task', 'create_task', 'update_task',
   'block_task', 'resume_task', 'list_tasks', 'log_productivity', 'unknown',
 ];
-const PRODUCTIVITY_STATUSES = ['focused', 'distracted', 'break', 'idle'];
+
+// The answer we use when the AI's text cannot be used at all: no action, just a friendly reply.
+const fallbackIntent = (reply) => ({
+  action: 'unknown', reply,
+  task_name: null, task_id: null, confidence: 0, productivity_status: null, duration_minutes: null, note: null,
+});
 
 const asText = (v) => {
   if (v === null || v === undefined) return null;
@@ -40,19 +46,12 @@ export function parseIntent(rawText) {
   try {
     data = JSON.parse(stripFences(String(rawText ?? '')));
   } catch {
-    return {
-      action: 'unknown',
-      reply: "I had a little hiccup processing that — could you try again? I'm here to help!",
-      task_name: null, task_id: null, confidence: 0, productivity_status: null, duration_minutes: null, note: null,
-    };
+    return fallbackIntent("I had a little hiccup processing that — could you try again? I'm here to help!");
   }
 
   // The AI must answer with a JSON object. Anything else gets the default "please rephrase".
   if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-    return {
-      action: 'unknown', reply: "I'm here to help! Could you rephrase that?",
-      task_name: null, task_id: null, confidence: 0, productivity_status: null, duration_minutes: null, note: null,
-    };
+    return fallbackIntent("I'm here to help! Could you rephrase that?");
   }
 
   let action = asText(data.action) ?? 'unknown';

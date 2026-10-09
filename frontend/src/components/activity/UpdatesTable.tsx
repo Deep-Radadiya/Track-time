@@ -6,10 +6,22 @@ import { useActivities, useMissedReminders, useUpdateActivity } from '@/hooks/us
 import { useTasks } from '@/hooks/useTasks'
 import type { MissedReminder, ReminderActivity, Task } from '@/types/api'
 
+// The coloured icon the user can pick with an update (how the session went).
 const SESSION_BADGE: Record<string, { label: string; icon: typeof Check; bg: string }> = {
   productive: { label: 'Productive', icon: Check, bg: 'bg-green-500' },
   average: { label: 'Average', icon: Ellipsis, bg: 'bg-yellow-400' },
   needs_improvement: { label: 'Needs Improvement', icon: X, bg: 'bg-red-500' },
+}
+
+function SessionBadge({ status }: { status: unknown }) {
+  const badge = SESSION_BADGE[String(status)]
+  if (!badge) return null
+  const Icon = badge.icon
+  return (
+    <span title={badge.label} aria-label={badge.label} className={`shrink-0 self-start w-6 h-6 rounded-full flex items-center justify-center text-white ${badge.bg}`}>
+      <Icon size={15} strokeWidth={2.5} />
+    </span>
+  )
 }
 
 interface UpdatesTableProps {
@@ -25,9 +37,10 @@ interface UpdatesTableProps {
   onAddMissed?: (missed: MissedReminder) => void
 }
 
+// One line in the table: either an update the user wrote, or a reminder they never answered.
 type Row = { kind: 'update'; time: number; a: ReminderActivity } | { kind: 'missed'; time: number; m: MissedReminder }
 
-/** Today's updates, grouped by task (one card per task, oldest first). */
+/** One day's updates (today unless `date` is given), grouped by task: one card per task, oldest first. */
 export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: UpdatesTableProps) {
   const navigate = useNavigate()
   const { data: activities = [], isLoading, error } = useActivities(date ? { date, limit: 200 } : { today: true, limit: 200 })
@@ -37,6 +50,7 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
 
+  // The text the user wrote (older updates only have optional_notes).
   const textOf = (a: ReminderActivity) => String(a.metadata?.raw_text ?? a.optional_notes ?? '')
   const startEdit = (a: ReminderActivity) => { setEditingId(a.id); setDraft(textOf(a)) }
   const save = (a: ReminderActivity) => {
@@ -45,25 +59,22 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
     if (text === textOf(a)) return setEditingId(null)
     saveUpdate.mutate({ id: a.id, text }, { onSuccess: () => setEditingId(null) })
   }
+  // Use the reminder's current title; fall back to the title saved with the update (e.g. deleted reminders).
   const titles = new Map<string, string>(tasks.map((t: Task) => [t.id, t.title] as [string, string]))
-
   const titleOf = (a: ReminderActivity) => (a.task_id && titles.get(a.task_id)) || a.task_title || 'Untitled'
 
   const addMissed = (m: MissedReminder) =>
     onAddMissed ? onAddMissed(m) : navigate(`/update/${m.task_id}?due=${encodeURIComponent(m.due_at)}`)
 
+  const q = search?.trim().toLowerCase()
+
+  // Only updates the user wrote (not "task created" and other log lines).
   const updateRows: Row[] = activities
     .filter((a: ReminderActivity) => a.metadata?.event === 'reminder_response')
     .filter((a: ReminderActivity) => !taskId || a.task_id === taskId)
-    .filter((a: ReminderActivity) => {
-      const q = search?.trim().toLowerCase()
-      if (!q) return true
-      const text = String(a.metadata?.raw_text ?? a.optional_notes ?? '')
-      return text.toLowerCase().includes(q) || titleOf(a).toLowerCase().includes(q)
-    })
+    .filter((a: ReminderActivity) => !q || textOf(a).toLowerCase().includes(q) || titleOf(a).toLowerCase().includes(q))
     .map((a: ReminderActivity): Row => ({ kind: 'update', time: +new Date(a.timestamp), a }))
 
-  const q = search?.trim().toLowerCase()
   const missedRows: Row[] = missedAll
     .filter((m: MissedReminder) => !q || (titles.get(m.task_id) ?? m.task_title).toLowerCase().includes(q))
     .map((m: MissedReminder): Row => ({ kind: 'missed', time: +new Date(m.due_at), m }))
@@ -72,7 +83,11 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
   const rowTaskId = (row: Row) => (row.kind === 'missed' ? row.m.task_id : row.a.task_id)
   const rowTitle = (row: Row) => (row.kind === 'missed' ? titles.get(row.m.task_id) || row.m.task_title : titleOf(row.a))
   const countUpdates = (list: Row[]) => list.filter((row) => row.kind === 'update').length
+  const plural = (n: number) => `${n} ${n === 1 ? 'update' : 'updates'}`
+  // Reminder rows answer a reminder (or are a missed one); manual rows were written without one.
+  const isReminderRow = (row: Row) => row.kind === 'missed' || Boolean(row.a.metadata?.reminder_at)
 
+  // Group the rows by reminder, keeping the time order inside each group.
   const groups = new Map<string, Row[]>()
   for (const row of rows) {
     const key = rowTaskId(row) ?? rowTitle(row)
@@ -126,16 +141,7 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
             </div>
           ) : (
             <>
-              {(() => {
-                const badge = SESSION_BADGE[String(a.metadata?.session_status)]
-                if (!badge) return null
-                const Icon = badge.icon
-                return (
-                  <span title={badge.label} aria-label={badge.label} className={`shrink-0 self-start w-6 h-6 rounded-full flex items-center justify-center text-white ${badge.bg}`}>
-                    <Icon size={15} strokeWidth={2.5} />
-                  </span>
-                )
-              })()}
+              <SessionBadge status={a.metadata?.session_status} />
               <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-text-primary">
                 {textOf(a)}
                 {a.metadata?.edited_at ? <span className="ml-2 text-xs text-text-muted">(edited)</span> : null}
@@ -156,6 +162,23 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
     </ul>
   )
 
+  // The reminder table, then the manual table. Empty ones are left out.
+  const splitView = (list: Row[]) =>
+    [
+      { title: 'Reminder updates', rows: list.filter(isReminderRow) },
+      { title: 'Manual updates', rows: list.filter((row) => !isReminderRow(row)) },
+    ]
+      .filter((part) => part.rows.length > 0)
+      .map((part) => (
+        <div key={part.title} className="border-t border-ink/[0.06]">
+          <div className="flex items-center justify-between gap-3 px-4 pt-2.5 pb-1">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">{part.title}</h3>
+            <span className="text-xs text-text-muted">{plural(countUpdates(part.rows))}</span>
+          </div>
+          {rowsView(part.rows)}
+        </div>
+      ))
+
   if (isLoading) return <div className="glass-card px-4 py-4 text-sm text-text-secondary">Loading…</div>
   if (error) return <div className="glass-card px-4 py-4 text-sm text-danger">Failed to load updates.</div>
   if (rows.length === 0) {
@@ -172,9 +195,9 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
       <section className="glass-card overflow-hidden">
         <div className="px-4 py-3">
           <h2 className="text-sm font-semibold text-text-primary">Updates for this task today</h2>
-          <p className="text-xs text-text-muted mt-1">{countUpdates(rows)} {countUpdates(rows) === 1 ? 'update' : 'updates'}</p>
+          <p className="text-xs text-text-muted mt-1">{plural(countUpdates(rows))}</p>
         </div>
-        <div className="border-t border-ink/[0.06]">{rowsView(rows)}</div>
+        {splitView(rows)}
       </section>
     )
   }
@@ -186,10 +209,10 @@ export function UpdatesTable({ taskId, date, search, onEdit, onAddMissed }: Upda
           <div className="flex items-center justify-between gap-3 px-4 py-3 bg-primary/5">
             <h2 className="text-sm font-semibold text-text-primary truncate">{rowTitle(list[0])}</h2>
             <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-              {countUpdates(list)} {countUpdates(list) === 1 ? 'update' : 'updates'}
+              {plural(countUpdates(list))}
             </span>
           </div>
-          {rowsView(list)}
+          {splitView(list)}
         </section>
       ))}
     </div>

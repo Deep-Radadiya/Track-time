@@ -15,6 +15,7 @@ interface ProtectedRouteProps {
   children: React.ReactElement
 }
 
+// Pages behind this need a logged-in user. Anyone else is sent to /login.
 function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated } = useAuthStore()
 
@@ -28,64 +29,28 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   return <Layout>{children}</Layout>
 }
 
+// Every page that needs a login. /update/:taskId is opened by clicking a reminder notification.
+const PROTECTED_PAGES = [
+  { path: '/dashboard', page: <DashboardPage /> },
+  { path: '/update/:taskId', page: <TaskUpdatePage /> },
+  { path: '/tasks', page: <TasksPage /> },
+  { path: '/voice', page: <VoicePage /> },
+  { path: '/updates', page: <UpdatesPage /> },
+  { path: '/settings', page: <SettingsPage /> },
+]
+
 export default function App() {
   return (
     <Routes>
-      {/* Public Pages */}
+      {/* Public pages */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
 
-      {/* Protected Dashboard/Features */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/update/:taskId"
-        element={
-          <ProtectedRoute>
-            <TaskUpdatePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tasks"
-        element={
-          <ProtectedRoute>
-            <TasksPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/voice"
-        element={
-          <ProtectedRoute>
-            <VoicePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/updates"
-        element={
-          <ProtectedRoute>
-            <UpdatesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
+      {PROTECTED_PAGES.map(({ path, page }) => (
+        <Route key={path} path={path} element={<ProtectedRoute>{page}</ProtectedRoute>} />
+      ))}
 
-      {/* Redirect fallbacks */}
+      {/* Any unknown address goes to the dashboard */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )

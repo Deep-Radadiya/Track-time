@@ -22,7 +22,9 @@ export default function TaskUpdatePage() {
   const { taskId } = useParams<{ taskId: string }>()
   // When opened from a reminder notification, the update is saved at the time that reminder was due.
   const [searchParams] = useSearchParams()
-  const dueFromLink = searchParams.get('due')
+  // Only the first update saved here answers that reminder; later ones are manual.
+  const [linkUsed, setLinkUsed] = useState(false)
+  const dueFromLink = linkUsed ? null : searchParams.get('due')
   // A missed reminder picked from the list below: the update is saved at that reminder's time.
   const [forMissed, setForMissed] = useState<string | null>(null)
   const reminderTime = forMissed ?? dueFromLink
@@ -61,6 +63,7 @@ export default function TaskUpdatePage() {
         : activitiesApi.submit({ text: text.trim(), source: 'text', task_id: taskId ?? null, session_status: sessionStatus, reminder_time: reminderTime }),
     onSuccess: () => {
       toast.success(editing ? 'Update changed' : 'Update saved')
+      if (!editing && !forMissed) setLinkUsed(true)
       setEditing(null)
       setForMissed(null)
       setText('')

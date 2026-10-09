@@ -2,12 +2,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as zod from "zod";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, resetAppData } from "@/hooks/useAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { parseApiError } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Bell, Loader2, Mail, Lock } from "lucide-react";
-import { idbClearToken } from "@/stores/authStore";
 
 const loginSchema = zod.object({
   email: zod.string().email("Please enter a valid email address"),
@@ -42,20 +41,6 @@ export function LoginForm() {
     }
   };
 
-  const resetAppData = async () => {
-    try {
-      localStorage.clear();
-      await idbClearToken();
-      if ("serviceWorker" in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map((r) => r.unregister()));
-      }
-      toast.success("App data cleared — please try again.");
-      window.location.reload();
-    } catch {
-      toast.error("Could not reset app data.");
-    }
-  };
 
   return (
     <div className="w-full max-w-md p-6 sm:p-8 glass-card-elevated space-y-6 relative">

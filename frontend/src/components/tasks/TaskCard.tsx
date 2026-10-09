@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useTaskAction, useDeleteTask } from "@/hooks/useTasks";
 import { TaskEditModal } from "./TaskEditModal";
-import { formatDueDate } from "@/lib/utils";
+import { formatDueDate, isReminderOn } from "@/lib/utils";
 
 interface TaskCardProps {
   task: Task;
@@ -46,8 +46,7 @@ export function TaskCard({ task }: TaskCardProps) {
   };
 
   const hasNotes = task.notes && task.notes.length > 0;
-  // ON = the reminder fires. OFF = paused (the server stops sending it).
-  const isOn = ["pending", "in_progress", "snoozed"].includes(task.status);
+  const isOn = isReminderOn(task);
 
   return (
     <motion.div
@@ -58,7 +57,7 @@ export function TaskCard({ task }: TaskCardProps) {
         <div className="space-y-1 select-none flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3
-              className={`text-base font-semibold text-text-primary truncate `}
+              className="text-base font-semibold text-text-primary truncate"
             >
               {task.title}
             </h3>
@@ -90,6 +89,7 @@ export function TaskCard({ task }: TaskCardProps) {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* The on/off switch. Off "blocks" the reminder on the server; on "reopens" it. */}
           <button
             role="switch"
             aria-checked={isOn}

@@ -6,24 +6,15 @@ import { authApi } from '@/api/auth'
 import { registerPushSubscription } from '@/lib/sw-registration'
 import { parseApiError } from '@/lib/utils'
 import toast from 'react-hot-toast'
-
-import {
-  ToggleLeft,
-  ToggleRight,
-  Bell,
-  LogOut
-} from 'lucide-react'
+import { ToggleLeft, ToggleRight, Bell, LogOut } from 'lucide-react'
 
 export default function SettingsPage() {
   const { user, setUser } = useAuthStore()
   const { logout } = useAuth()
   const navigate = useNavigate()
-  
-  
-  // Settings state
   const [savingSettings, setSavingSettings] = useState(false)
 
-  // Local form state
+  // A local copy of the user's settings. Nothing is saved until "Save Preferences" is clicked.
   const [settings, setSettings] = useState({
     working_hours_start: user?.working_hours_start || '09:00:00',
     working_hours_end: user?.working_hours_end || '17:00:00',
@@ -33,7 +24,7 @@ export default function SettingsPage() {
     checkin_enabled: user?.checkin_enabled ?? true,
   })
 
-  // When global user changes, update local state
+  // When the user is (re)loaded, copy the fresh values into the form.
   useEffect(() => {
     if (user) {
       setSettings({
@@ -56,7 +47,7 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSettingChange = (field: string, value: any) => {
+  const handleSettingChange = <K extends keyof typeof settings>(field: K, value: (typeof settings)[K]) => {
     setSettings(prev => ({ ...prev, [field]: value }))
   }
 
@@ -97,7 +88,7 @@ export default function SettingsPage() {
       {/* Notification Preferences */}
       <div className="glass-card p-4 sm:p-5 space-y-5">
         <h2 className="text-sm font-bold uppercase tracking-wider text-text-secondary">Notifications & Preferences</h2>
-        
+
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-medium text-text-primary">Task Reminders</p>
@@ -112,8 +103,8 @@ export default function SettingsPage() {
         </div>
 
         <div className="pt-2 flex justify-end">
-          <button 
-            onClick={handleSaveSettings} 
+          <button
+            onClick={handleSaveSettings}
             disabled={savingSettings}
             className="btn-primary w-full sm:w-auto py-2 px-4 text-sm disabled:opacity-50"
           >
@@ -139,11 +130,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Account Actions (Visible mostly for mobile) */}
+      {/* Sign out (phones only: on desktop the button is in the sidebar) */}
       <div className="md:hidden glass-card p-4 sm:p-5 space-y-4">
         <h2 className="text-sm font-bold uppercase tracking-wider text-danger">Account Actions</h2>
-        <button 
-          onClick={handleLogout} 
+        <button
+          onClick={handleLogout}
           className="w-full btn-ghost py-2.5 px-4 text-sm bg-danger/10 text-danger hover:bg-danger/20 border border-danger/20 flex items-center justify-center gap-2"
         >
           <LogOut size={18} />

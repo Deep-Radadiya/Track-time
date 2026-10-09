@@ -1,3 +1,5 @@
+// Shapes of the data the server sends and receives. Field names match the server (snake_case).
+
 export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'snoozed' | 'blocked'
 export type Recurrence = 'none' | 'interval' | 'daily' | 'weekly'
 export type TaskSource = 'voice' | 'text'
@@ -138,11 +140,7 @@ export interface Device {
   push_enabled: boolean
 }
 
-export interface TaskNote{
- detail: string | Array<{ msg: string; loc: string[]; type: string }>
-}
-
-// ── Reminder Activity (response flow) ─────────────────────────────────────
+// ── Activity log (what happened, and the updates the user wrote) ─────────
 export type ActivityType =
   | 'created'
   | 'started'

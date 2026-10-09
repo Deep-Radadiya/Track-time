@@ -2,25 +2,15 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { useWsStore } from '@/stores/wsStore'
+import { api } from '@/api/axios'
+import { getTokenExpiry } from '@/lib/utils'
 import { TASKS_KEY } from './useTasks'
 
 const API_URL = import.meta.env.VITE_API_URL as string ?? 'http://localhost:8000'
 const WS_URL = API_URL.replace(/^http/, 'ws')
 
+// Server messages that mean "the reminder list changed", so the list is loaded again.
 const INVALIDATING_EVENTS = new Set(['task_created', 'task_updated', 'task_deleted', 'task_action'])
-
-/**
- * Decode a JWT payload without verifying the signature (client-side only).
- * Returns the exp claim in seconds, or 0 on failure.
- */
-function getTokenExpiry(token: string): number {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return typeof payload.exp === 'number' ? payload.exp : 0
-  } catch {
-    return 0
-  }
-}
 
 /** Returns true if the token expires within the next `bufferSeconds` seconds. */
 function isTokenNearExpiry(token: string, bufferSeconds = 60): boolean {
@@ -29,6 +19,12 @@ function isTokenNearExpiry(token: string, bufferSeconds = 60): boolean {
   return exp - Date.now() / 1000 < bufferSeconds
 }
 
+/**
+ * Keeps one live WebSocket connection to the server while the user is logged in.
+ * When another tab or the reminder timer changes a task, the server sends a message
+ * and we reload the reminder list. If the connection drops, we reconnect with a
+ * growing delay (1s, 2s, 4s ... up to 30s).
+ */
 export function useWebSocket() {
   const { accessToken, isAuthenticated } = useAuthStore()
   const { setSocket, setStatus } = useWsStore()
@@ -84,15 +80,13 @@ export function useWebSocket() {
       // Ping the server to trigger the Axios 401 → refresh interceptor.
       // Wait for it to settle before scheduling the reconnect so the store
       // holds the new token by the time we call connect().
-      import('@/api/axios').then(({ api }) => {
-        api.get('/auth/me').catch(() => {}).finally(() => {
-          timeoutRef.current = setTimeout(() => {
-            const freshToken = useAuthStore.getState().accessToken
-            if (freshToken && useAuthStore.getState().isAuthenticated) {
-              connectWithToken(freshToken)
-            }
-          }, delay)
-        })
+      api.get('/auth/me').catch(() => {}).finally(() => {
+        timeoutRef.current = setTimeout(() => {
+          const freshToken = useAuthStore.getState().accessToken
+          if (freshToken && useAuthStore.getState().isAuthenticated) {
+            connectWithToken(freshToken)
+          }
+        }, delay)
       })
     }
 
@@ -135,7 +129,6 @@ export function useWebSocket() {
       // refresh it first so we don't open a socket that will immediately 403.
       if (isTokenNearExpiry(token)) {
         try {
-          const { api } = await import('@/api/axios')
           await api.get('/auth/me')
         } catch {
           // Interceptor will have refreshed the token or logged the user out.

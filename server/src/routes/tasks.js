@@ -28,6 +28,25 @@ const cancelNotification = (userId, taskId) => {
   sendToUser(userId, cancelPayload(taskId)).catch((err) => console.warn('[Push] cancel failed:', err.message));
 };
 
+// Checks a daily time window. Returns an error message, or null when it is fine.
+function windowError(start, end, intervalMinutes) {
+  if (!start || !end) return 'window_start and window_end must be set together';
+  if (toSeconds(end) <= toSeconds(start)) return 'End time must be after start time';
+  if (!(intervalMinutes > 0)) return 'interval_minutes is required with a time window';
+  return null;
+}
+
+// Reads the optional lunch break from the request body.
+// Returns { lunchStart, lunchEnd } (both null when there is no lunch), or { error } when it is wrong.
+function readLunch(body) {
+  if (body.lunch_start == null && body.lunch_end == null) return { lunchStart: null, lunchEnd: null };
+  const lunchStart = normalizeTime(body.lunch_start);
+  const lunchEnd = normalizeTime(body.lunch_end);
+  if (!lunchStart || !lunchEnd) return { error: 'lunch_start and lunch_end must be set together' };
+  if (toSeconds(lunchEnd) <= toSeconds(lunchStart)) return { error: 'Lunch end must be after lunch start' };
+  return { lunchStart, lunchEnd };
+}
+
 // What happened, as an activity type.
 const TYPE_FOR_ACTION = { done: 'completed', snooze: 'snoozed', start: 'started', block: 'blocked', reopen: 'resumed' };
 const TYPE_FOR_STATUS = { done: 'completed', blocked: 'blocked', in_progress: 'started', pending: 'resumed', snoozed: 'snoozed' };
@@ -50,19 +69,14 @@ router.post('/', async (req, res) => {
   const windowStart = hasWindow ? normalizeTime(b.window_start) : null;
   const windowEnd = hasWindow ? normalizeTime(b.window_end) : null;
   if (hasWindow) {
-    if (!windowStart || !windowEnd) return bad(res, 'window_start and window_end must be set together');
-    if (toSeconds(windowEnd) <= toSeconds(windowStart)) return bad(res, 'End time must be after start time');
-    if (!(b.interval_minutes > 0)) return bad(res, 'interval_minutes is required with a time window');
+    const error = windowError(windowStart, windowEnd, b.interval_minutes);
+    if (error) return bad(res, error);
   }
 
   // Lunch break: both ends together, end after start.
-  const hasLunch = b.lunch_start != null || b.lunch_end != null;
-  const lunchStart = hasLunch ? normalizeTime(b.lunch_start) : null;
-  const lunchEnd = hasLunch ? normalizeTime(b.lunch_end) : null;
-  if (hasLunch) {
-    if (!lunchStart || !lunchEnd) return bad(res, 'lunch_start and lunch_end must be set together');
-    if (toSeconds(lunchEnd) <= toSeconds(lunchStart)) return bad(res, 'Lunch end must be after lunch start');
-  }
+  const lunch = readLunch(b);
+  if (lunch.error) return bad(res, lunch.error);
+  const { lunchStart, lunchEnd } = lunch;
 
   let finalRecurrence = recurrence;
   if (hasWindow) {
@@ -139,16 +153,11 @@ router.patch('/:id', async (req, res) => {
     // Changing the daily time window (same rules as when creating): move to the next free slot.
     const windowStart = normalizeTime(b.window_start);
     const windowEnd = normalizeTime(b.window_end);
-    if (!windowStart || !windowEnd) return bad(res, 'window_start and window_end must be set together');
-    if (toSeconds(windowEnd) <= toSeconds(windowStart)) return bad(res, 'End time must be after start time');
-    if (!(task.interval_minutes > 0)) return bad(res, 'interval_minutes is required with a time window');
-    const hasLunch = b.lunch_start != null || b.lunch_end != null;
-    const lunchStart = hasLunch ? normalizeTime(b.lunch_start) : null;
-    const lunchEnd = hasLunch ? normalizeTime(b.lunch_end) : null;
-    if (hasLunch) {
-      if (!lunchStart || !lunchEnd) return bad(res, 'lunch_start and lunch_end must be set together');
-      if (toSeconds(lunchEnd) <= toSeconds(lunchStart)) return bad(res, 'Lunch end must be after lunch start');
-    }
+    const error = windowError(windowStart, windowEnd, task.interval_minutes);
+    if (error) return bad(res, error);
+    const lunch = readLunch(b);
+    if (lunch.error) return bad(res, lunch.error);
+    const { lunchStart, lunchEnd } = lunch;
     const next = nextWindowSlot(new Date(), req.user.timezone, windowStart, windowEnd, task.interval_minutes, lunchStart, lunchEnd);
     if (!next) return bad(res, 'No reminder slots fit in that time window');
     Object.assign(task, { recurrence: 'interval', window_start: windowStart, window_end: windowEnd, lunch_start: lunchStart, lunch_end: lunchEnd });
